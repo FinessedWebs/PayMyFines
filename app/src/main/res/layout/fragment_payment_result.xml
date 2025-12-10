@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/iconResult"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:src="@drawable/ic_success"
+        app:tint="@color/successGreen" />
+
+    <TextView
+        android:id="@+id/textResultTitle"
+        android:text="Payment Successful"
+        android:textStyle="bold"
+        android:textSize="22sp"
+        android:layout_marginTop="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/textResultMessage"
+        android:text="Your payment has been processed."
+        android:layout_marginTop="6dp"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/textAmountPaid"
+        android:text="Amount Paid: R0.00"
+        android:layout_marginTop="18dp"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/textReference"
+        android:text="Reference: ---"
+        android:layout_marginTop="6dp"
+        android:textSize="14sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGoHome"
+        android:layout_marginTop="32dp"
+        android:text="Back to Home"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

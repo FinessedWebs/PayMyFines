@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+
+
+    <!-- LOGIN -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.paymyfinesstep.LoginFragment"
+        android:label="Login">
+
+        <action
+            android:id="@+id/action_loginFragment_to_signupFragment"
+            app:destination="@id/signupFragment" />
+
+        <action
+            android:id="@+id/action_loginFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!-- SIGNUP -->
+    <fragment
+        android:id="@+id/signupFragment"
+        android:name="com.example.paymyfinesstep.SignupFragment"
+        android:label="Signup">
+
+        <action
+            android:id="@+id/action_signupFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/signupFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.paymyfinesstep.ui.home.HomeFragment">
+
+        <action
+            android:id="@+id/action_homeFragment_to_fineDetailsFragment"
+            app:destination="@id/fineDetailsFragment"/>
+
+        <action
+            android:id="@+id/action_homeFragment_to_cartFragment"
+            app:destination="@id/cartFragment"/>
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/fineDetailsFragment"
+        android:name="com.example.paymyfinesstep.ui.details.FineDetailsFragment"
+        android:label="Fine Details">
+
+        <argument
+            android:name="fine"
+            app:argType="com.example.paymyfinesstep.api.IForceItem" />
+
+        <action
+            android:id="@+id/action_fineDetailsFragment_to_cartFragment"
+            app:destination="@id/cartFragment" />
+    </fragment>
+
+
+
+    <fragment
+        android:id="@+id/vehicleFragment"
+        android:name="com.example.paymyfinesstep.ui.vehicles.VehiclesFragment"
+        android:label="Vehicles" />
+
+    <fragment
+        android:id="@+id/notificationsFragment"
+        android:name="com.example.paymyfinesstep.ui.notifications.NotificationsFragment"
+        android:label="Notifications" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.paymyfinesstep.SettingsFragment"
+        android:label="Settings" />
+
+    <fragment
+        android:id="@+id/applyReductionFragment"
+        android:name="com.example.paymyfinesstep.ApplyReductionFragment"
+        android:label="Apply for Reduction" />
+
+    <fragment
+        android:id="@+id/applyRedirectionFragment"
+        android:name="com.example.paymyfinesstep.ApplyRedirectionFragment"
+        android:label="Apply for Redirection" />
+
+    <fragment
+        android:id="@+id/accountSettingsFragment"
+        android:name="com.example.paymyfinesstep.ui.settings.AccountSettingsFragment"
+        android:label="Account Settings" />
+
+    <fragment
+        android:id="@+id/notificationPreferencesFragment"
+        android:name="com.example.paymyfinesstep.ui.settings.NotificationPreferencesFragment"
+        android:label="Notification Preferences" />
+
+    <fragment
+        android:id="@+id/helpFragment"
+        android:name="com.example.paymyfinesstep.ui.settings.HelpFragment"
+        android:label="Help &amp; Support" />
+
+    <fragment
+        android:id="@+id/termsFragment"
+        android:name="com.example.paymyfinesstep.ui.settings.TermsFragment"
+        android:label="Terms &amp; Conditions" />
+
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="com.example.paymyfinesstep.ui.settings.AboutFragment"
+        android:label="About paymyfinesstep" />
+
+    <fragment
+        android:id="@+id/familyFragment"
+        android:name="com.example.paymyfinesstep.ui.family.FamilyFragment">
+
+        <action
+            android:id="@+id/action_familyFragment_to_addFamilyFragment"
+            app:destination="@id/addFamilyFragment" />
+
+        <action
+            android:id="@+id/action_familyFragment_to_familyFinesFragment"
+            app:destination="@id/familyFinesFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/addFamilyFragment"
+        android:name="com.example.paymyfinesstep.ui.family.AddFamilyFragment"
+        android:label="Add Family Member" />
+
+    <fragment
+        android:id="@+id/familyFinesFragment"
+        android:name="com.example.paymyfinesstep.ui.family.FamilyFinesFragment">
+
+        <argument
+            android:name="familyMemberIdNumber"
+            app:argType="string" />
+
+        <action
+            android:id="@+id/action_familyFinesFragment_to_fineDetailsFragment"
+            app:destination="@id/fineDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/cartFragment"
+        android:name="com.example.paymyfinesstep.cart.CartFragment"
+        android:label="Cart" />
+
+    <fragment
+        android:id="@+id/checkoutFragment"
+        android:name="com.example.paymyfinesstep.ui.checkout.CheckoutFragment"
+        android:label="Checkout" />
+
+    <fragment
+        android:id="@+id/paymentFragment"
+        android:name="com.example.paymyfinesstep.payment.PaymentFragment">
+
+        <action
+            android:id="@+id/action_paymentFragment_to_paymentResultFragment"
+            app:destination="@id/paymentResultFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/paymentResultFragment"
+        android:name="com.example.paymyfinesstep.payment.PaymentResultFragment">
+
+        <argument
+            android:name="success"
+            app:argType="boolean" />
+
+        <argument
+            android:name="amountCents"
+            app:argType="integer" />
+
+        <argument
+            android:name="reference"
+            app:argType="string" />
+
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/paymentHistoryFragment"
+        android:name="com.example.paymyfinesstep.payment.PaymentHistoryFragment"
+        android:label="Payment History" />
+
+
+
+</navigation>

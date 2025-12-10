@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- STATUS -->
+        <TextView
+            android:id="@+id/textStatusTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="6dp"/>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipStatusNotice"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notice" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipStatusSummons"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Summons" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipStatusWarrant"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Warrant" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipStatusCamera"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Camera fine" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipStatusCourt"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Court date" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginVertical="12dp"/>
+
+        <!-- SEVERITY -->
+        <TextView
+            android:id="@+id/textSeverityTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Value"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="6dp"/>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupSeverity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipSeverityHigh"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="High amount (≥ R1000)" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipSeverityMed"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Medium (≥ R500)" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipSeverityLow"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Low (> R0)" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginVertical="12dp"/>
+
+        <!-- PAYMENT -->
+        <TextView
+            android:id="@+id/textPaymentTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Payment eligibility"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="6dp"/>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupPayment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPayAllowed"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Payable" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPayNotAllowed"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Not allowed" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginVertical="12dp"/>
+
+        <!-- DATE RANGE -->
+        <TextView
+            android:id="@+id/textDateTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Date range"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="6dp"/>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDate30"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Last 30 days" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDate6months"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Last 6 months" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDate12months"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Last 12 months" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDateAll"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="All time" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginVertical="12dp"/>
+
+        <!-- ISSUING AUTHORITY -->
+        <TextView
+            android:id="@+id/textLocationTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Issuing authority"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="6dp"/>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipMetro"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Metro police" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipProvincial"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Provincial" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipSAPS"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SAPS / Court" />
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- BUTTONS -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:layout_marginTop="20dp">
+
+            <Button
+                android:id="@+id/btnResetFilters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reset"/>
+
+            <Button
+                android:id="@+id/btnApplyFilters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Apply"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

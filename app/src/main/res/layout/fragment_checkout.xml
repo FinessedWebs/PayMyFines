@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginTop="70dp"
+    android:background="@color/backgroundColor"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Header -->
+    <TextView
+        android:id="@+id/textCheckoutTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp"
+        android:text="Checkout"
+        android:textColor="@color/textColor"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <!-- Card-like section for recycler -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:backgroundTint="@color/offWhite"
+        android:padding="12dp"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="4dp">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerCheckout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="4dp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Total section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:paddingTop="18dp">
+
+        <TextView
+            android:id="@+id/textCheckoutTotal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="Total: R0.00"
+            android:textColor="@color/textColor"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Buttons row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:paddingTop="12dp">
+
+        <!-- Cancel - subtle -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCheckoutCancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textAllCaps="false"
+            android:textColor="@color/gray" />
+
+        <!-- Proceed - strong CTA (Primary Color) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnProceedToPay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:backgroundTint="@color/primaryColor"
+            android:text="Proceed To Payment"
+            android:textAllCaps="false"
+            android:textColor="@color/black"
+            app:cornerRadius="16dp"
+            app:rippleColor="@color/primaryDarkColor" />
+    </LinearLayout>
+
+    <!-- Hidden WebView for iVeri -->
+    <WebView
+        android:id="@+id/webViewIveri"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
+</LinearLayout>

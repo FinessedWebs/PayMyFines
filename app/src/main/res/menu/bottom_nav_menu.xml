@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:title="Home"
+        android:icon="@drawable/ic_person"
+        app:showAsAction="ifRoom" />
+
+    <!--<item
+        android:id="@+id/familyFragment"
+        android:title="Family"
+        android:icon="@drawable/ic_family"
+        app:showAsAction="ifRoom" />-->
+
+    <item
+        android:id="@+id/vehicleFragment"
+        android:title="Vehicles"
+        android:icon="@drawable/ic_vehicle"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/notificationsFragment"
+        android:title="Notifications"
+        android:icon="@drawable/ic_notifications"
+        app:showAsAction="ifRoom" />
+</menu>

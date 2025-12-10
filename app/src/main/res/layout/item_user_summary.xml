@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="10dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="#F7F7F7">
+
+    <!-- LEFT: number of fines -->
+    <TextView
+        android:id="@+id/textFineCount"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="0 unpaid fines found"
+        android:textColor="#555555"
+        android:textSize="13sp" />
+
+    <!-- RIGHT: Select all -->
+    <CheckBox
+        android:id="@+id/checkSelectAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select all"
+        android:textSize="13sp" />
+
+</LinearLayout>

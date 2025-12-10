@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="5dp"
+    app:cardCornerRadius="20dp"
+    app:cardUseCompatPadding="true"
+    app:cardElevation="6dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/primaryLightColor"
+    android:foreground="?attr/selectableItemBackground"
+    android:backgroundTint="@color/offWhite">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="14dp"
+        android:gravity="center_vertical">
+
+        <!-- Left accent strip -->
+        <View
+            android:layout_width="4dp"
+            android:layout_height="40dp"
+            android:background="@color/segmentActive"
+            android:layout_marginEnd="12dp" />
+
+        <!-- Middle: fine info -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Your existing desc ID -->
+            <TextView
+                android:id="@+id/textCheckoutFineDesc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notice #90/00251/803/001395"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="@color/textColor"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <!-- Sub label: vibe / context -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="fine notice • Amount Due"
+                android:textSize="12sp"
+                android:textColor="@color/gray"
+                android:paddingTop="3dp" />
+        </LinearLayout>
+
+        <!-- Right: amount chip (your existing amount ID) -->
+        <TextView
+            android:id="@+id/textCheckoutFineAmount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="R400.00"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="6dp"
+            android:background="@drawable/bg_amount_badge"
+            android:textColor="@color/segmentActive" />
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

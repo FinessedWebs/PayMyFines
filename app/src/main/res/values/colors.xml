@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 🌟 Brand Colors -->
+    <color name="primaryColor">#FFD401</color>
+    <color name="primaryDarkColor">#C7A800</color>
+    <color name="primaryLightColor">#FFF176</color> <!-- NEW: soft highlight yellow -->
+    <color name="accentColor">#005BBB</color>
+
+    <color name="offWhite">#FEFEDA</color>
+    <color name="segmentActive">#0A4EFF</color>
+    <color name="segmentInactive">#9A9A9A</color>
+
+
+    <!-- 🌟 Backgrounds -->
+    <color name="backgroundColor">#FFFFFF</color>
+    <color name="surfaceColor">#FFFFFF</color>
+
+    <!-- 🌟 Text & Contrast -->
+    <color name="textColor">#000000</color>
+    <color name="onPrimaryColor">#FFFFFF</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="gray">#888888</color>
+    <color name="red">#E53935</color>
+
+
+    <!-- 🌟 Accents & States -->
+    <color name="warning_orange">#FFA726</color>
+    <color name="teal_700">#018786</color>
+    <color name="successGreen">#4CAF50</color> <!-- NEW: success state -->
+    <color name="errorRed">#E53935</color> <!-- NEW: error feedback -->
+
+    <!-- 🌟 State Colors -->
+    <color name="state_new">#FFD401</color>
+    <color name="state_viewed">#888888</color>
+    <color name="state_due_soon">#FFA726</color>
+    <color name="state_due">#FF0000</color>
+
+    <!-- or your real color -->
+
+
+
+
+</resources>
+

@@ -1,0 +1,70 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_apply"
+        android:title="Apply"
+        android:icon="@drawable/apply_arrow_left"
+        app:showAsAction="never">
+
+        <menu>
+
+            <item
+                android:id="@+id/action_apply_reduction"
+                android:title="Apply for Reduction" />
+
+            <item
+                android:id="@+id/action_apply_redirection"
+                android:title="Apply for Redirection" />
+
+        </menu>
+    </item>
+
+    <!--&lt;!&ndash; SETTINGS &ndash;&gt;-->
+    <item
+        android:id="@+id/action_settings"
+        android:title="Settings"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_logout"
+        android:title="Logout"
+        app:showAsAction="never" />
+
+</menu>
+   <!-- <?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto">
+
+&lt;!&ndash; APPLY PARENT DROPDOWN &ndash;&gt;
+<item
+    android:id="@+id/action_apply"
+    android:title="Apply"
+    android:icon="@drawable/apply_arrow_left"
+    app:showAsAction="never">
+
+    <menu>
+
+        <item
+            android:id="@+id/action_apply_reduction"
+            android:title="Apply for Reduction" />
+
+        <item
+            android:id="@+id/action_apply_redirection"
+            android:title="Apply for Redirection" />
+
+    </menu>
+</item>
+
+&lt;!&ndash; SETTINGS &ndash;&gt;
+<item
+    android:id="@+id/action_settings"
+    android:title="Settings"
+    app:showAsAction="never" />
+
+<item
+    android:id="@+id/action_logout"
+    android:title="Logout"
+    app:showAsAction="never" />
+
+</menu>-->

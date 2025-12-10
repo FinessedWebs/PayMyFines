@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- USER INFO CARD -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_card"
+            android:elevation="4dp"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/textUserName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Full Name"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textUserEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="email@example.com" />
+
+            <TextView
+                android:id="@+id/textUserId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="ID Number: 0000000000000" />
+        </LinearLayout>
+
+
+        <!-- ACCOUNT SECTION -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:text="Account"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnAccountSettings"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:textAlignment="viewStart"
+            android:textColor="@color/black"
+            android:text="Account Settings" />
+
+        <Button
+            android:id="@+id/btnNotificationPreferences"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:textAlignment="viewStart"
+            android:textColor="@color/black"
+            android:text="Notification Preferences" />
+
+
+        <!-- APP INFO -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:layout_marginBottom="10dp"
+            android:text="App Information"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnHelp"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:textAlignment="viewStart"
+            android:textColor="@color/black"
+            android:text="Help &amp; Support" />
+
+        <Button
+            android:id="@+id/btnTerms"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:textAlignment="viewStart"
+            android:textColor="@color/black"
+            android:text="Terms &amp; Conditions" />
+
+        <Button
+            android:id="@+id/btnAbout"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:textAlignment="viewStart"
+            android:textColor="@color/black"
+            android:text="About PayMyFines" />
+
+
+        <!-- LOGOUT BUTTON -->
+        <!-- <Button
+             android:id="@+id/btnLogout"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:layout_marginTop="40dp"
+             android:backgroundTint="@color/red"
+             android:text="Logout"
+             android:textColor="@android:color/white" />-->
+
+        <!-- <com.google.android.material.button.MaterialButton
+             android:id="@+id/btnDeactivate"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:text="Deactivate Account"
+             android:layout_marginTop="1dp"
+             android:backgroundTint="@android:color/holo_red_dark"
+             android:textColor="@android:color/white" />-->
+
+
+    </LinearLayout>
+</ScrollView>

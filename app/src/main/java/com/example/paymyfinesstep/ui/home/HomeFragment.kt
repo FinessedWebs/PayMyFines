@@ -142,17 +142,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         binding.fabAddMember.setOnClickListener {
             AddFamilyMemberDialogFragment {
-                loadFines()   // refresh family list after adding
+                loadFines()
             }.show(childFragmentManager, "add_family_dialog")
         }
 
-
-
         // ------------------------------------------------------
-        // 1. RESTORE SAVED MODE IMMEDIATELY
+        // 1. RESTORE MODE FROM STORAGE
         // ------------------------------------------------------
-        /*currentMode = savedMode*/
         currentMode = loadSavedMode()
+
+
 
         // ------------------------------------------------------
         // 2. MENU HOST
@@ -167,25 +166,22 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 when (menuItem.itemId) {
                     R.id.action_apply_reduction -> {
-                        findNavController().navigate(R.id.applyReductionFragment)
-                        return true
+                        findNavController().navigate(R.id.applyReductionFragment); return true
                     }
                     R.id.action_apply_redirection -> {
-                        findNavController().navigate(R.id.applyRedirectionFragment)
-                        return true
+                        findNavController().navigate(R.id.applyRedirectionFragment); return true
                     }
                     R.id.action_settings -> {
-                        findNavController().navigate(R.id.settingsFragment)
-                        return true
+                        findNavController().navigate(R.id.settingsFragment); return true
                     }
                     R.id.action_logout -> {
-                        logoutUser()
-                        return true
+                        logoutUser(); return true
                     }
                 }
                 return false
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
 
 
         // ------------------------------------------------------
@@ -216,34 +212,44 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val btnCart = view.findViewById<ImageButton>(R.id.btnCart)
 
 
+
         // ------------------------------------------------------
-        // 4. DROPDOWN SETUP
+        // 4. MODE TOGGLE BUTTONS (replaces dropdown)
         // ------------------------------------------------------
-        inputLayoutProfileMode = binding.inputLayoutProfileMode
-        dropdownProfileMode = binding.dropdownProfileMode
+        val btnModeIndividual = view.findViewById<ImageButton>(R.id.btnModeIndividual)
+        val btnModeFamily = view.findViewById<ImageButton>(R.id.btnModeFamily)
 
-        val profileModes = arrayOf("Individuals", "Family")
+        fun updateModeIcons(mode: ProfileMode) {
+            if (mode == ProfileMode.INDIVIDUAL) {
+                btnModeIndividual.setColorFilter(resources.getColor(android.R.color.white))
+                btnModeFamily.setColorFilter(resources.getColor(android.R.color.darker_gray))
+            } else {
+                btnModeIndividual.setColorFilter(resources.getColor(android.R.color.darker_gray))
+                btnModeFamily.setColorFilter(resources.getColor(android.R.color.white))
+            }
+        }
 
-        dropdownProfileMode.setSimpleItems(profileModes)
+        // Apply highlight immediately
+        updateModeIcons(currentMode)
 
-        // Set dropdown text based on restored mode
-        dropdownProfileMode.setText(
-            if (currentMode == ProfileMode.INDIVIDUAL) "Individuals" else "Family",
-            false
-        )
-
-        inputLayoutProfileMode.setEndIconOnClickListener { dropdownProfileMode.showDropDown() }
-        dropdownProfileMode.setOnClickListener { dropdownProfileMode.showDropDown() }
-
-        dropdownProfileMode.setOnItemClickListener { _, _, position, _ ->
-            currentMode = if (position == 0) ProfileMode.INDIVIDUAL else ProfileMode.FAMILY
+        btnModeIndividual.setOnClickListener {
+            currentMode = ProfileMode.INDIVIDUAL
             saveMode(currentMode)
-
-
+            updateModeIcons(currentMode)
             updateModeUI()
             loadFines()
             updateFabVisibility(currentMode)
         }
+
+        btnModeFamily.setOnClickListener {
+            currentMode = ProfileMode.FAMILY
+            saveMode(currentMode)
+            updateModeIcons(currentMode)
+            updateModeUI()
+            loadFines()
+            updateFabVisibility(currentMode)
+        }
+
 
 
         // ------------------------------------------------------
@@ -251,15 +257,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // ------------------------------------------------------
         editSearch.addTextChangedListener {
             val q = it.toString().trim()
-
-            if (currentMode == ProfileMode.FAMILY) {
-                searchFamilyMembers(q)
-            } else {
-                searchFines(q)
-            }
+            if (currentMode == ProfileMode.FAMILY) searchFamilyMembers(q)
+            else searchFines(q)
         }
 
         btnSearch.setOnClickListener { showSearchBottomSheet() }
+
 
 
         // ------------------------------------------------------
@@ -275,15 +278,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
 
+
         // ------------------------------------------------------
         // 7. CART
         // ------------------------------------------------------
         btnCart.setOnClickListener {
-            val action = HomeFragmentDirections.actionHomeFragmentToCartFragment()
-            findNavController().navigate(action)
+            findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToCartFragment())
         }
 
         updateCartBadge()
+
 
 
         // ------------------------------------------------------
@@ -293,8 +297,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             items = mutableListOf(),
             allFines = emptyList(),
             onFineClick = { fine ->
-                val action = HomeFragmentDirections
-                    .actionHomeFragmentToFineDetailsFragment(fine)
+                val action = HomeFragmentDirections.actionHomeFragmentToFineDetailsFragment(fine)
                 findNavController().navigate(action)
             },
             onMemberClick = { },
@@ -306,6 +309,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         recyclerFamilyUsers.adapter = familyAdapter
 
 
+
         // ------------------------------------------------------
         // 9. LOAD DATA + INIT UI + FAB
         // ------------------------------------------------------
@@ -313,12 +317,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         setupRecycler()
         setupToggleAnimation()
 
-        resetFabMenu()           // Ensure FAB menu starts closed
+        resetFabMenu()
         setupFabMenu()
         updateFabVisibility(currentMode)
 
         loadFines()
     }
+
 
 
     private var menuOpen = false

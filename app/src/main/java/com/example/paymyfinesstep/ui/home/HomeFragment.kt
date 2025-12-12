@@ -1,6 +1,7 @@
 
 package com.example.paymyfinesstep.ui.home
 
+import android.app.AlertDialog
 import android.content.Context
 import android.icu.util.Calendar
 import android.os.Bundle
@@ -38,6 +39,9 @@ import com.example.paymyfinesstep.api.FamilyApi
 import com.example.paymyfinesstep.api.FamilyMember
 import com.example.paymyfinesstep.api.IForceItem
 import com.example.paymyfinesstep.cart.CartManager
+import com.example.paymyfinesstep.databinding.FragmentHomeBinding
+
+import com.example.paymyfinesstep.ui.family.AddFamilyMemberDialogFragment
 import com.example.paymyfinesstep.ui.family.FamilyAdapter
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -54,6 +58,9 @@ import kotlin.math.roundToInt
 
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
+
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
 
     private val api by lazy { ApiBackend.create(requireContext(), InfringementsApi::class.java) }
 
@@ -92,7 +99,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private lateinit var recyclerFamilyUsers: RecyclerView
     private lateinit var textUsersFound: TextView
-    private lateinit var textExpandAll: TextView
+    /*private lateinit var textExpandAll: TextView*/
     private lateinit var editSearch: TextInputEditText
     private var searchQuery = ""
 
@@ -105,7 +112,24 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private var fullFamilyList: List<FamilyMember> = emptyList()
     private var activeFilters = FilterOptions()
 
+    private fun saveMode(mode: ProfileMode) {
+        prefs.edit().putString("profile_mode", mode.name).apply()
+    }
+
+    private fun loadSavedMode(): ProfileMode {
+        val saved = prefs.getString("profile_mode", ProfileMode.INDIVIDUAL.name)
+        return ProfileMode.valueOf(saved!!)
+    }
+
+    private val profileModes = listOf("Individual", "Family")
+
+
     private lateinit var textCartBadge: TextView
+
+
+    /*companion object {
+        private var savedMode: ProfileMode = ProfileMode.INDIVIDUAL
+    }*/
 
 
 
@@ -114,9 +138,26 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentHomeBinding.bind(view)
 
+        binding.fabAddMember.setOnClickListener {
+            AddFamilyMemberDialogFragment {
+                loadFines()   // refresh family list after adding
+            }.show(childFragmentManager, "add_family_dialog")
+        }
+
+
+
+        // ------------------------------------------------------
+        // 1. RESTORE SAVED MODE IMMEDIATELY
+        // ------------------------------------------------------
+        /*currentMode = savedMode*/
+        currentMode = loadSavedMode()
+
+        // ------------------------------------------------------
+        // 2. MENU HOST
+        // ------------------------------------------------------
         val menuHost: MenuHost = requireActivity()
-
         menuHost.addMenuProvider(object : MenuProvider {
 
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -125,22 +166,18 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 when (menuItem.itemId) {
-
                     R.id.action_apply_reduction -> {
                         findNavController().navigate(R.id.applyReductionFragment)
                         return true
                     }
-
                     R.id.action_apply_redirection -> {
                         findNavController().navigate(R.id.applyRedirectionFragment)
                         return true
                     }
-
                     R.id.action_settings -> {
                         findNavController().navigate(R.id.settingsFragment)
                         return true
                     }
-
                     R.id.action_logout -> {
                         logoutUser()
                         return true
@@ -148,113 +185,70 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
                 return false
             }
-
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
 
-        // --- PROFILE FIELDS ---
-        val btnSearch = view.findViewById<ImageButton>(R.id.btnSearch)
-        val inputSearch = view.findViewById<TextInputLayout>(R.id.inputSearch)
-        val btnFilter = view.findViewById<ImageButton>(R.id.btnFilter)
-        val btnCart = view.findViewById<ImageButton>(R.id.btnCart)
-
-
-
+        // ------------------------------------------------------
+        // 3. BASIC UI REFERENCES
+        // ------------------------------------------------------
         imageProfileAvatar = view.findViewById(R.id.imageProfileAvatar)
         textProfileName = view.findViewById(R.id.textProfileName)
         textProfileEmail = view.findViewById(R.id.textProfileEmail)
         textProfileId = view.findViewById(R.id.textProfileId)
 
-        // --- SUMMARY ---
         textTopFineCount = view.findViewById(R.id.textTopFineCount)
 
-        // --- FINES LIST ---
         recyclerFines = view.findViewById(R.id.recyclerFines)
         progress = view.findViewById(R.id.progressBar)
 
-        // --- TOGGLE ---
         btnUnpaid = view.findViewById(R.id.btnUnpaid)
         btnPaid = view.findViewById(R.id.btnPaid)
         slidingPill = view.findViewById(R.id.viewSlidingPill)
         toggleContainer = view.findViewById(R.id.togglePaidState)
 
-// --- DROPDOWN ---
-        inputLayoutProfileMode = view.findViewById(R.id.inputLayoutProfileMode)
-        dropdownProfileMode = view.findViewById(R.id.dropdownProfileMode)
+        recyclerFamilyUsers = view.findViewById(R.id.recyclerFamilyUsers)
+        editSearch = view.findViewById(R.id.editSearch)
+        textUsersFound = view.findViewById(R.id.textUsersFound)
+        textCartBadge = view.findViewById(R.id.textCartBadge)
 
-// Set dropdown list items
-        dropdownProfileMode.setSimpleItems(arrayOf("Individuals", "Family"))
+        val btnSearch = view.findViewById<ImageButton>(R.id.btnSearch)
+        val btnFilter = view.findViewById<ImageButton>(R.id.btnFilter)
+        val btnCart = view.findViewById<ImageButton>(R.id.btnCart)
 
-// Default value
-        dropdownProfileMode.setText("Individuals", false)
 
-// Open dropdown when clicked
+        // ------------------------------------------------------
+        // 4. DROPDOWN SETUP
+        // ------------------------------------------------------
+        inputLayoutProfileMode = binding.inputLayoutProfileMode
+        dropdownProfileMode = binding.dropdownProfileMode
+
+        val profileModes = arrayOf("Individuals", "Family")
+
+        dropdownProfileMode.setSimpleItems(profileModes)
+
+        // Set dropdown text based on restored mode
+        dropdownProfileMode.setText(
+            if (currentMode == ProfileMode.INDIVIDUAL) "Individuals" else "Family",
+            false
+        )
+
         inputLayoutProfileMode.setEndIconOnClickListener { dropdownProfileMode.showDropDown() }
         dropdownProfileMode.setOnClickListener { dropdownProfileMode.showDropDown() }
 
-        textUsersFound = view.findViewById(R.id.textUsersFound)
-        textExpandAll = view.findViewById(R.id.textExpandAll)
-        recyclerFamilyUsers = view.findViewById(R.id.recyclerFamilyUsers)
-
-        editSearch = view.findViewById(R.id.editSearch)
-
-        editSearch.addTextChangedListener {
-            searchQuery = it.toString().trim()
-            updateList()  // re-filter fines
-        }
-
-
-
-
-// Handle selection
         dropdownProfileMode.setOnItemClickListener { _, _, position, _ ->
-            currentMode = if (position == 0) {
-                ProfileMode.INDIVIDUAL
-            } else {
-                ProfileMode.FAMILY
-            }
-
-            updateModeUI()   // 🔥 Switch UI instantly (hide profile bar, show users count, etc.)
-            loadFines()      // 🔥 Load correct fines based on mode
-        }
-
-        textUsersFound = view.findViewById(R.id.textUsersFound)
-        textExpandAll = view.findViewById(R.id.textExpandAll)
-        recyclerFamilyUsers = view.findViewById(R.id.recyclerFamilyUsers)
-        textCartBadge = view.findViewById(R.id.textCartBadge)
-        updateCartBadge()
+            currentMode = if (position == 0) ProfileMode.INDIVIDUAL else ProfileMode.FAMILY
+            saveMode(currentMode)
 
 
-        familyAdapter = FamilyAdapter(
-            emptyList(),
-            emptyList(),
-            onFineClick = { fine ->
-                val action = HomeFragmentDirections
-                    .actionHomeFragmentToFineDetailsFragment(fine)
-                findNavController().navigate(action)
-            },
-            onMemberClick = { member ->
-                // optional, if you want a separate member-click action
-            }
-        )
-
-        recyclerFamilyUsers.layoutManager = LinearLayoutManager(requireContext())
-        recyclerFamilyUsers.adapter = familyAdapter
-
-
-        btnSearch.setOnClickListener {
-
-            showSearchBottomSheet()
-            Log.d("SEARCH_CLICK", "Search button was tapped")
-        }
-
-        btnCart.setOnClickListener {
-            val action = HomeFragmentDirections.actionHomeFragmentToCartFragment()
-            findNavController().navigate(action)
+            updateModeUI()
+            loadFines()
+            updateFabVisibility(currentMode)
         }
 
 
-
+        // ------------------------------------------------------
+        // 5. SEARCH
+        // ------------------------------------------------------
         editSearch.addTextChangedListener {
             val q = it.toString().trim()
 
@@ -265,36 +259,206 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
 
+        btnSearch.setOnClickListener { showSearchBottomSheet() }
 
 
-
-
-
+        // ------------------------------------------------------
+        // 6. FILTERS
+        // ------------------------------------------------------
         btnFilter.setOnClickListener {
             val sheet = FilterBottomSheet(activeFilters) { newFilters ->
                 activeFilters = newFilters
-                updateList()   // this will use activeFilters + search + unpaid/paid
+                updateList()
             }
             sheet.show(childFragmentManager, "filters")
             updateFilterBadge()
         }
 
 
+        // ------------------------------------------------------
+        // 7. CART
+        // ------------------------------------------------------
+        btnCart.setOnClickListener {
+            val action = HomeFragmentDirections.actionHomeFragmentToCartFragment()
+            findNavController().navigate(action)
+        }
+
+        updateCartBadge()
 
 
+        // ------------------------------------------------------
+        // 8. FAMILY ADAPTER
+        // ------------------------------------------------------
+        familyAdapter = FamilyAdapter(
+            items = mutableListOf(),
+            allFines = emptyList(),
+            onFineClick = { fine ->
+                val action = HomeFragmentDirections
+                    .actionHomeFragmentToFineDetailsFragment(fine)
+                findNavController().navigate(action)
+            },
+            onMemberClick = { },
+            onDelete = { },
+            onEdit = { }
+        )
 
+        recyclerFamilyUsers.layoutManager = LinearLayoutManager(requireContext())
+        recyclerFamilyUsers.adapter = familyAdapter
+
+
+        // ------------------------------------------------------
+        // 9. LOAD DATA + INIT UI + FAB
+        // ------------------------------------------------------
         setupProfile()
         setupRecycler()
         setupToggleAnimation()
-        /*setupFamilyRecycler()*/
+
+        resetFabMenu()           // Ensure FAB menu starts closed
+        setupFabMenu()
+        updateFabVisibility(currentMode)
 
         loadFines()
     }
+
+
+    private var menuOpen = false
+
+    private fun resetFabMenu() {
+        binding.fabAddMember.apply {
+            visibility = View.GONE
+            alpha = 0f
+            translationY = 0f
+        }
+
+        binding.fabDeleteMember.apply {
+            visibility = View.GONE
+            alpha = 0f
+            translationY = 0f
+        }
+    }
+
+
+    private fun setupFabMenu() {
+        var isOpen = false
+
+        binding.fabMain.setOnClickListener {
+
+            isOpen = !isOpen
+
+            if (isOpen) {
+                // Expand menu
+                binding.fabAddMember.visibility = View.VISIBLE
+                binding.fabDeleteMember.visibility =
+                    if (currentMode == ProfileMode.FAMILY) View.VISIBLE else View.GONE
+
+                binding.fabAddMember.animate().translationY(-10f).alpha(1f).setDuration(200).start()
+                binding.fabDeleteMember.animate().translationY(-25f).alpha(1f).setDuration(200).start()
+
+            } else {
+                // Collapse
+                binding.fabAddMember.animate().translationY(0f).alpha(0f)
+                    .setDuration(150)
+                    .withEndAction { binding.fabAddMember.visibility = View.GONE }
+                    .start()
+
+                binding.fabDeleteMember.animate().translationY(0f).alpha(0f)
+                    .setDuration(150)
+                    .withEndAction { binding.fabDeleteMember.visibility = View.GONE }
+                    .start()
+            }
+        }
+
+        /*binding.fabAddMember.setOnClickListener {
+            findNavController().navigate(R.id.action_home_to_addFamily)
+        }*/
+
+        binding.fabDeleteMember.setOnClickListener {
+            showDeleteMemberDialog()
+        }
+    }
+
+    private fun updateFabVisibility(mode: ProfileMode) {
+        binding.fabAddMember.visibility = View.VISIBLE // always visible
+
+        if (mode == ProfileMode.INDIVIDUAL) {
+            binding.fabDeleteMember.visibility = View.GONE
+        } else {
+            binding.fabDeleteMember.visibility = View.VISIBLE
+        }
+    }
+
+
+
+    /*private fun updateFabVisibility(mode: String) {
+        if (mode == "Individual") {
+            binding.fabDeleteMember.visibility = View.GONE
+            binding.fabAddMember.visibility = View.VISIBLE
+            binding.fabMain.text = "Add"
+        } else if (mode == "Family") {
+            binding.fabDeleteMember.visibility = View.VISIBLE
+            binding.fabAddMember.visibility = View.VISIBLE
+            binding.fabMain.text = "Actions"
+        }
+    }*/
+
+
 
     override fun onResume() {
         super.onResume()
         updateCartBadge()
     }
+
+    private fun showDeleteMemberDialog() {
+
+        if (fullFamilyList.isEmpty()) {
+            Toast.makeText(requireContext(), "No family members available", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val names = fullFamilyList.map { "${it.fullName} ${it.surname}" }.toTypedArray()
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select Member to Delete")
+            .setItems(names) { _, index ->
+                val selected = fullFamilyList[index]
+                confirmFamilyDelete(selected)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun confirmFamilyDelete(member: FamilyMember) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Remove Family Member")
+            .setMessage("Are you sure you want to remove ${member.fullName}?")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Delete") { _, _ ->
+                performFamilyDelete(member)
+            }
+            .show()
+    }
+
+    private fun performFamilyDelete(member: FamilyMember) {
+        lifecycleScope.launch {
+            try {
+                val resp = withContext(Dispatchers.IO) {
+                    familyApi.deleteFamilyMember(member.id)
+                }
+
+                if (resp.isSuccessful) {
+                    Toast.makeText(requireContext(), "Member removed", Toast.LENGTH_SHORT).show()
+                    loadFines() // reload family list + fines
+                } else {
+                    Toast.makeText(requireContext(), "Delete failed (${resp.code()})", Toast.LENGTH_LONG).show()
+                }
+
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+
 
     private fun updateCartBadge() {
         lifecycleScope.launch {
@@ -370,7 +534,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         if (query.isBlank()) {
             // reset list
-            familyAdapter.update(fullFamilyList, allFines)
+            familyAdapter.update(fullFamilyList.toMutableList(), allFines)
             textUsersFound.text = "${fullFamilyList.size} Users Found"
             return
         }
@@ -383,7 +547,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         familyMembers = filtered
 
-        familyAdapter.update(filtered, allFines)
+        familyAdapter.update(filtered.toMutableList(), allFines)
+
+
 
         textUsersFound.text = "${filtered.size} Users Found"
     }
@@ -454,7 +620,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val cardSummary = view?.findViewById<View>(R.id.cardSummary)
         val familyHeader = view?.findViewById<View>(R.id.familyHeaderRow)
         val textUsersFound = view?.findViewById<TextView>(R.id.textUsersFound)
-        val textExpandAll = view?.findViewById<TextView>(R.id.textExpandAll)
+        /*val textExpandAll = view?.findViewById<TextView>(R.id.textExpandAll)*/
         val recyclerFamilyUsers = view?.findViewById<RecyclerView>(R.id.recyclerFamilyUsers)
 
         // 🔥 THIS VIEW was the cause of hiding Family Mode fines
@@ -472,7 +638,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             familyHeader?.visibility = View.GONE
             recyclerFamilyUsers?.visibility = View.GONE
             textUsersFound?.visibility = View.GONE
-            textExpandAll?.visibility = View.GONE
+            /*textExpandAll?.visibility = View.GONE*/
 
             // Do NOT reset adapter every time → it breaks expand states
             return
@@ -488,10 +654,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         familyHeader?.visibility = View.VISIBLE
         recyclerFamilyUsers?.visibility = View.VISIBLE
         textUsersFound?.visibility = View.VISIBLE
-        textExpandAll?.visibility = View.VISIBLE
+        /*textExpandAll?.visibility = View.VISIBLE*/
 
         textUsersFound?.text = "0 Users Found"
-        textExpandAll?.text = "Expand all ▼"
+        /*textExpandAll?.text = "Expand all ▼"*/
     }
 
 
@@ -537,59 +703,99 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         lifecycleScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) {
+                val fines = withContext(Dispatchers.IO) {
 
-                    // ----------------------------
-                    // INDIVIDUAL MODE
-                    // ----------------------------
+                    // ---------------------------- INDIVIDUAL ----------------------------
                     if (currentMode == ProfileMode.INDIVIDUAL) {
                         val response = api.getInfringements()
+
+                        val error = response.errorDetails?.firstOrNull()
+                        if (error?.statusCode == 99) {
+                            withContext(Dispatchers.Main) { showDailyLimitError() }
+                            return@withContext emptyList<IForceItem>()
+                        }
+
                         return@withContext response.iForce ?: emptyList()
                     }
 
+                    // ---------------------------- FAMILY ----------------------------
                     // ----------------------------
-                    // FAMILY MODE
-                    // ----------------------------
+// FAMILY MODE
+// ----------------------------
                     val familyList = familyApi.getFamilyMembers()
                     fullFamilyList = familyList
                     familyMembers = familyList
 
-                    // Update member list before loading fines
+// Update UI with family list
                     withContext(Dispatchers.Main) {
                         textUsersFound.text = "${familyList.size} Users Found"
-                        familyAdapter.update(familyList, emptyList())
+                        familyAdapter.update(familyList.toMutableList(), emptyList())
                     }
 
-                    // Load fines for each family member
-                    val collectedFines = familyList.flatMap { member ->
+                    var dailyLimitReached = false
+                    val collectedFines = mutableListOf<IForceItem>()
+
+                    for (member in familyList) {
                         val resp = api.getFamilyInfringements(member.idNumber)
 
-                        resp.iForce?.map { fine ->
-                            fine.copy(userIdNumber = member.idNumber)
-                        } ?: emptyList()
+                        val err = resp.errorDetails?.firstOrNull()
+
+                        val isDailyLimit = err?.statusCode == 99 &&
+                                err.message?.contains("daily limit", ignoreCase = true) == true
+
+                        if (isDailyLimit) {
+                            dailyLimitReached = true
+                            continue
+                        }
+
+                        // Do NOT treat "No results found" as a limit error.
+                        // Just skip fines for that member.
+                        if (err != null) {
+                            continue
+                        }
+
+                        resp.iForce?.forEach { fine ->
+                            collectedFines.add(fine.copy(userIdNumber = member.idNumber))
+                        }
                     }
 
-                    // Once all fines are ready → update UI
+
+                    // Update UI with whatever fines were successfully retrieved
                     withContext(Dispatchers.Main) {
-                        familyAdapter.update(familyList, collectedFines)
+                        familyAdapter.update(familyList.toMutableList(), collectedFines)
+                    }
+
+                        // After loading everything, show the limit warning once
+                    if (dailyLimitReached) {
+                        withContext(Dispatchers.Main) {
+                            showDailyLimitError()
+                        }
                     }
 
                     return@withContext collectedFines
+
                 }
 
-                // Store list + refresh UI
-                allFines = result
+                allFines = fines
                 updateList()
 
             } catch (e: Exception) {
-                Toast.makeText(requireContext(),
-                    "Error loading fines: ${e.message}",
-                    Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Error loading fines: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 progress.visibility = View.GONE
             }
         }
     }
+
+    private fun showDailyLimitError() {
+        Toast.makeText(
+            requireContext(),
+            "Daily lookup limit reached. Try again tomorrow.",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
+
 
 
 
@@ -752,7 +958,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
             adapter.update(afterFilters)
         } else {
-            familyAdapter?.update(familyMembers, afterFilters)
+            familyAdapter.update(
+                familyMembers.toMutableList(),
+                afterFilters
+            )
+
+
         }
     }
 
@@ -810,4 +1021,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             .actionHomeFragmentToFineDetailsFragment(fine)
         findNavController().navigate(action)
     }
+    override fun onDestroyView() {
+        _binding = null
+        super.onDestroyView()
+    }
+
+    private fun openAddFamilyDialog() {
+        Toast.makeText(requireContext(), "Add Family Member dialog coming soon", Toast.LENGTH_SHORT).show()
+    }
+
+
+
+
 }

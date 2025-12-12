@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/loginFragment">
 
@@ -47,7 +48,16 @@
         <action
             android:id="@+id/action_homeFragment_to_cartFragment"
             app:destination="@id/cartFragment"/>
+
+        <!--<action
+            android:id="@+id/action_home_to_addFamily"
+            app:destination="@id/addFamilyFragment" />-->
     </fragment>
+
+    <!--<fragment
+        android:id="@+id/addFamilyFragment"
+        android:name="com.example.paymyfinesstep.ui.family.AddFamilyFragment"
+        tools:layout="@layout/dialog_add_family_member" />-->
 
 
     <fragment
@@ -120,9 +130,7 @@
         android:id="@+id/familyFragment"
         android:name="com.example.paymyfinesstep.ui.family.FamilyFragment">
 
-        <action
-            android:id="@+id/action_familyFragment_to_addFamilyFragment"
-            app:destination="@id/addFamilyFragment" />
+
 
         <action
             android:id="@+id/action_familyFragment_to_familyFinesFragment"
@@ -130,10 +138,7 @@
 
     </fragment>
 
-    <fragment
-        android:id="@+id/addFamilyFragment"
-        android:name="com.example.paymyfinesstep.ui.family.AddFamilyFragment"
-        android:label="Add Family Member" />
+
 
     <fragment
         android:id="@+id/familyFinesFragment"

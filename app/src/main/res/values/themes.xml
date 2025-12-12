@@ -10,7 +10,7 @@
     </style>
 
     <style name="CustomOutlinedTextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@android:color/white</item>
+        <item name="boxStrokeColor">@color/primaryColor</item>
         <item name="boxStrokeWidth">2dp</item>
         <item name="boxCornerRadiusTopStart">12dp</item>
         <item name="boxCornerRadiusTopEnd">12dp</item>

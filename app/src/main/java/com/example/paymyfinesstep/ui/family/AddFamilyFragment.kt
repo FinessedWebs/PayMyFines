@@ -8,7 +8,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.paymyfinesstep.R
 import com.example.paymyfinesstep.api.ApiBackend
-import com.example.paymyfinesstep.api.AuthApi
 import com.example.paymyfinesstep.api.FamilyAddRequest
 
 import com.example.paymyfinesstep.api.FamilyApi
@@ -17,7 +16,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
-class AddFamilyFragment : Fragment(R.layout.fragment_add_family) {
+class AddFamilyFragment : Fragment(R.layout.dialog_add_family_member) {
 
     private val api by lazy { ApiBackend.create(requireContext(),FamilyApi::class.java) }
 

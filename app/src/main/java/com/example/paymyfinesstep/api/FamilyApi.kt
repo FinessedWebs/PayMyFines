@@ -1,9 +1,12 @@
 package com.example.paymyfinesstep.api
 
+import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 data class FamilyAddRequest(
     val fullName: String,
@@ -41,15 +44,7 @@ interface FamilyApi {
     @GET("family/list")
     suspend fun getFamilyMembers(): List<FamilyMember>
 
+    @DELETE("family/{id}")
+    suspend fun deleteFamilyMember(@Path("id") id: String): Response<Unit>
 
-    /*@POST("family/add")
-    suspend fun addFamily(
-        @Header("Authorization") token: String,
-        @Body request: FamilyAddRequest
-    ): FamilyAddResponse
-
-    @GET("family/list")
-    suspend fun getFamilyMembers(
-        @Header("Authorization") token: String
-    ): List<FamilyMember>*/
 }

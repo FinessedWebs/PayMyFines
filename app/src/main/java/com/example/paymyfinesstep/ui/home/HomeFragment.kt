@@ -4,6 +4,7 @@ package com.example.paymyfinesstep.ui.home
 import android.app.AlertDialog
 import android.content.Context
 import android.icu.util.Calendar
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -48,12 +49,14 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import kotlin.math.roundToInt
 
 
@@ -70,7 +73,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         requireContext().getSharedPreferences("paymyfines_prefs", 0)
     }
 
-    private lateinit var imageProfileAvatar: ImageView
+    private lateinit var imageHomeProfileAvatar: ShapeableImageView
+
     private lateinit var textProfileName: TextView
     private lateinit var textProfileEmail: TextView
     private lateinit var textProfileId: TextView
@@ -102,6 +106,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     /*private lateinit var textExpandAll: TextView*/
     private lateinit var editSearch: TextInputEditText
     private var searchQuery = ""
+    private lateinit var profileInfoRow: View
+
 
 
 
@@ -111,6 +117,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private var fullFamilyList: List<FamilyMember> = emptyList()
     private var activeFilters = FilterOptions()
+
 
     private fun saveMode(mode: ProfileMode) {
         prefs.edit().putString("profile_mode", mode.name).apply()
@@ -125,6 +132,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
 
     private lateinit var textCartBadge: TextView
+    private lateinit var layoutFullName: TextInputLayout
+    private lateinit var layoutEmail: TextInputLayout
+
 
 
     /*companion object {
@@ -187,7 +197,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // ------------------------------------------------------
         // 3. BASIC UI REFERENCES
         // ------------------------------------------------------
-        imageProfileAvatar = view.findViewById(R.id.imageProfileAvatar)
+        imageHomeProfileAvatar = view.findViewById(R.id.imageHomeProfileAvatar)
         textProfileName = view.findViewById(R.id.textProfileName)
         textProfileEmail = view.findViewById(R.id.textProfileEmail)
         textProfileId = view.findViewById(R.id.textProfileId)
@@ -206,10 +216,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         editSearch = view.findViewById(R.id.editSearch)
         textUsersFound = view.findViewById(R.id.textUsersFound)
         textCartBadge = view.findViewById(R.id.textCartBadge)
+        profileInfoRow = view.findViewById(R.id.profileInfoRow)
+
 
         val btnSearch = view.findViewById<ImageButton>(R.id.btnSearch)
         val btnFilter = view.findViewById<ImageButton>(R.id.btnFilter)
         val btnCart = view.findViewById<ImageButton>(R.id.btnCart)
+
 
 
 
@@ -288,6 +301,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         updateCartBadge()
 
+        profileInfoRow.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_profileDetailsFragment
+            )
+        }
 
 
         // ------------------------------------------------------
@@ -310,10 +327,18 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
 
 
+
         // ------------------------------------------------------
         // 9. LOAD DATA + INIT UI + FAB
         // ------------------------------------------------------
         setupProfile()
+        parentFragmentManager.setFragmentResultListener(
+            "profile_image_updated",
+            viewLifecycleOwner
+        ) { _, _ ->
+            refreshProfileAvatar()
+        }
+
         setupRecycler()
         setupToggleAnimation()
 
@@ -323,6 +348,45 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         loadFines()
     }
+
+
+
+
+    private fun refreshProfileAvatar() {
+        val idNumber = prefs.getString("idNumber", null) ?: return
+
+        val file = File(requireContext().filesDir, "profile_avatar_$idNumber.jpg")
+        if (file.exists()) {
+            setCircularImage(file)
+        } else {
+            applyProfileIconFromId(idNumber)
+        }
+    }
+
+
+
+    private fun loadProfileAvatar() {
+        val prefs = requireContext()
+            .getSharedPreferences("paymyfines_prefs", Context.MODE_PRIVATE)
+
+        val idNumber = prefs.getString("idNumber", null) ?: return
+        val path = prefs.getString("profile_image_path_$idNumber", null)
+
+        if (path != null) {
+            val file = File(path)
+            if (file.exists()) {
+                imageHomeProfileAvatar.apply {
+                    setImageURI(Uri.fromFile(file))
+                    clearColorFilter()
+                }
+                return
+            }
+        }
+
+        // Fallback
+        applyProfileIconFromId(idNumber)
+    }
+
 
 
 
@@ -411,6 +475,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     override fun onResume() {
         super.onResume()
         updateCartBadge()
+        loadProfileAvatar()
+        refreshProfileAvatar()
     }
 
     private fun showDeleteMemberDialog() {
@@ -482,8 +548,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
 
     private fun logoutUser() {
-        val prefs = requireContext().getSharedPreferences("paymyfines_prefs", Context.MODE_PRIVATE)
-        prefs.edit().clear().apply()
+        val prefs = requireContext()
+            .getSharedPreferences("paymyfines_prefs", Context.MODE_PRIVATE)
+
+        prefs.edit()
+            .remove("jwt_token")
+            .remove("fullName")
+            .remove("email")
+            .remove("idNumber")
+            // ⛔ DO NOT remove profile_image_path
+            // ⛔ DO NOT remove UI preferences
+            .apply()
 
         findNavController().navigate(
             R.id.loginFragment,
@@ -493,6 +568,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 .build()
         )
     }
+
 
 
 
@@ -682,8 +758,37 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         textProfileEmail.text = email
         textProfileId.text = "ID: $idNumber"
 
-        applyProfileIconFromId(idNumber)
+        if (idNumber.isNotBlank()) {
+            val file = File(requireContext().filesDir, "profile_avatar_$idNumber.jpg")
+            if (file.exists()) {
+                setCircularImage(file)
+            } else {
+                applyProfileIconFromId(idNumber)
+            }
+        }
     }
+
+
+
+
+    private fun setCircularImage(file: File) {
+        imageHomeProfileAvatar.apply {
+            setImageDrawable(null)          // 🔥 clear cached drawable
+            invalidate()
+            setImageURI(Uri.fromFile(file)) // 🔥 force reload
+            clearColorFilter()
+            invalidate()
+            requestLayout()
+        }
+    }
+
+    /*private fun loadProfileImage(userId: String): File? {
+        val prefs = requireContext()
+            .getSharedPreferences("paymyfines_prefs", Context.MODE_PRIVATE)
+
+        val path = prefs.getString("profile_image_path_$userId", null)
+        return path?.let { File(it) }
+    }*/
 
 
 
@@ -715,13 +820,24 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         val response = api.getInfringements()
 
                         val error = response.errorDetails?.firstOrNull()
+
                         if (error?.statusCode == 99) {
-                            withContext(Dispatchers.Main) { showDailyLimitError() }
+                            val msg = error.message?.lowercase() ?: ""
+
+                            withContext(Dispatchers.Main) {
+                                when {
+                                    msg.contains("daily limit") -> showDailyLimitError()
+                                    msg.contains("no results") -> showNoResultsError()
+                                    else -> showGenericError(error.message)
+                                }
+                            }
+
                             return@withContext emptyList<IForceItem>()
                         }
 
                         return@withContext response.iForce ?: emptyList()
                     }
+
 
                     // ---------------------------- FAMILY ----------------------------
                     // ----------------------------
@@ -770,7 +886,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         familyAdapter.update(familyList.toMutableList(), collectedFines)
                     }
 
-                        // After loading everything, show the limit warning once
+                    // After loading everything, show the limit warning once
                     if (dailyLimitReached) {
                         withContext(Dispatchers.Main) {
                             showDailyLimitError()
@@ -792,6 +908,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
+
     private fun showDailyLimitError() {
         Toast.makeText(
             requireContext(),
@@ -800,7 +917,21 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         ).show()
     }
 
+    private fun showNoResultsError() {
+        Toast.makeText(
+            requireContext(),
+            "No infringements found for this ID number.",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 
+    private fun showGenericError(message: String?) {
+        Toast.makeText(
+            requireContext(),
+            message ?: "An error occurred while fetching infringements.",
+            Toast.LENGTH_LONG
+        ).show()
+    }
 
 
 
@@ -855,7 +986,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 else -> R.drawable.ic_grandma
             }
 
-            imageProfileAvatar.setImageResource(iconRes)
+            imageHomeProfileAvatar.setImageResource(iconRes)
 
         } catch (e: Exception) {
             // If anything fails (invalid ID format), do nothing

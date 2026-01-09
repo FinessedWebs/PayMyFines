@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
-    android:background="@drawable/paymyfines_signup_background"
+    android:background="@drawable/paymyfines_signup_background2"
     >
 
     <LinearLayout
@@ -128,7 +128,7 @@
             android:layout_marginTop="28dp"
             android:layout_marginBottom="0dp"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_paymyfines_logo"
+            android:src="@drawable/pmf_yellow_logo"
             android:transitionName="logoTransition" />
 
     </LinearLayout>

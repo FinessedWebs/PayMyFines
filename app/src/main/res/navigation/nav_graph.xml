@@ -11,7 +11,7 @@
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.example.paymyfinesstep.LoginFragment"
-        android:label="Login">
+        >
 
         <action
             android:id="@+id/action_loginFragment_to_signupFragment"
@@ -28,7 +28,7 @@
     <fragment
         android:id="@+id/signupFragment"
         android:name="com.example.paymyfinesstep.SignupFragment"
-        android:label="Signup">
+        >
 
         <action
             android:id="@+id/action_signupFragment_to_loginFragment"
@@ -49,10 +49,24 @@
             android:id="@+id/action_homeFragment_to_cartFragment"
             app:destination="@id/cartFragment"/>
 
-        <!--<action
-            android:id="@+id/action_home_to_addFamily"
-            app:destination="@id/addFamilyFragment" />-->
+        <action
+            android:id="@+id/action_homeFragment_to_profileDetailsFragment"
+            app:destination="@id/profileDetailsFragment" />
+
     </fragment>
+
+    <fragment
+        android:id="@+id/profileDetailsFragment"
+        android:name="com.example.paymyfinesstep.ui.profile.ProfileDetailsFragment"
+        >
+
+        <action
+            android:id="@+id/action_profileDetailsFragment_to_changePasswordFragment"
+            app:destination="@id/changePasswordFragment" />
+
+    </fragment>
+
+
 
     <!--<fragment
         android:id="@+id/addFamilyFragment"
@@ -63,7 +77,7 @@
     <fragment
         android:id="@+id/fineDetailsFragment"
         android:name="com.example.paymyfinesstep.ui.details.FineDetailsFragment"
-        android:label="Fine Details">
+        >
 
         <argument
             android:name="fine"
@@ -79,52 +93,47 @@
     <fragment
         android:id="@+id/vehicleFragment"
         android:name="com.example.paymyfinesstep.ui.vehicles.VehiclesFragment"
-        android:label="Vehicles" />
+        />
 
     <fragment
         android:id="@+id/notificationsFragment"
         android:name="com.example.paymyfinesstep.ui.notifications.NotificationsFragment"
-        android:label="Notifications" />
+         />
 
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.example.paymyfinesstep.SettingsFragment"
-        android:label="Settings" />
+         />
 
     <fragment
         android:id="@+id/applyReductionFragment"
         android:name="com.example.paymyfinesstep.ApplyReductionFragment"
-        android:label="Apply for Reduction" />
+        />
 
     <fragment
         android:id="@+id/applyRedirectionFragment"
         android:name="com.example.paymyfinesstep.ApplyRedirectionFragment"
-        android:label="Apply for Redirection" />
+        />
 
     <fragment
         android:id="@+id/accountSettingsFragment"
         android:name="com.example.paymyfinesstep.ui.settings.AccountSettingsFragment"
-        android:label="Account Settings" />
+         />
 
     <fragment
         android:id="@+id/notificationPreferencesFragment"
         android:name="com.example.paymyfinesstep.ui.settings.NotificationPreferencesFragment"
-        android:label="Notification Preferences" />
+         />
 
     <fragment
         android:id="@+id/helpFragment"
         android:name="com.example.paymyfinesstep.ui.settings.HelpFragment"
-        android:label="Help &amp; Support" />
+        />
 
     <fragment
         android:id="@+id/termsFragment"
         android:name="com.example.paymyfinesstep.ui.settings.TermsFragment"
-        android:label="Terms &amp; Conditions" />
-
-    <fragment
-        android:id="@+id/aboutFragment"
-        android:name="com.example.paymyfinesstep.ui.settings.AboutFragment"
-        android:label="About paymyfinesstep" />
+        />
 
     <fragment
         android:id="@+id/familyFragment"
@@ -156,12 +165,12 @@
     <fragment
         android:id="@+id/cartFragment"
         android:name="com.example.paymyfinesstep.cart.CartFragment"
-        android:label="Cart" />
+         />
 
     <fragment
         android:id="@+id/checkoutFragment"
         android:name="com.example.paymyfinesstep.ui.checkout.CheckoutFragment"
-        android:label="Checkout" />
+         />
 
     <fragment
         android:id="@+id/paymentFragment"
@@ -195,7 +204,27 @@
     <fragment
         android:id="@+id/paymentHistoryFragment"
         android:name="com.example.paymyfinesstep.payment.PaymentHistoryFragment"
-        android:label="Payment History" />
+        />
+
+    <fragment
+        android:id="@+id/changePasswordFragment"
+        android:name="com.example.paymyfinesstep.ui.profile.ChangePasswordFragment"
+        >
+
+        <action
+            android:id="@+id/action_profileDetailsFragment_to_changePasswordFragment"
+            app:destination="@id/changePasswordFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="com.example.paymyfinesstep.ui.about.AboutFragment"
+        >
+
+        <action
+            android:id="@+id/action_aboutFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
 
 
 

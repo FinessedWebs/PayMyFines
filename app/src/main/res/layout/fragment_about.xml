@@ -1,6 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="20dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- KEEP THIS EXACTLY -->
+    <TextView
+        android:id="@+id/textGreeting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hi, User"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/accentColor" />
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="20dp" />
+
+    <!-- FULL-WIDTH CONTAINER -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:background="@drawable/about_fines"
+        android:padding="20dp">
+
+        <!-- Content overlay -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/textAboutTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View and Pay your Fine"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="16dp" />
+
+            <Button
+                android:id="@+id/btnGoHome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Go to Home"
+                android:backgroundTint="@color/accentColor"
+                android:textColor="@android:color/white" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <!-- TABS -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabAbout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        app:tabIndicatorColor="@color/accentColor"
+        app:tabSelectedTextColor="@color/accentColor"
+        app:tabTextColor="@color/gray">
+
+        <com.google.android.material.tabs.TabItem
+            android:text="About"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"/>
+
+        <com.google.android.material.tabs.TabItem
+            android:text="FAQs"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"/>
+
+        <com.google.android.material.tabs.TabItem
+            android:text="Services"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"/>
+
+        <com.google.android.material.tabs.TabItem
+            android:text="Contact Us"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"/>
+
+    </com.google.android.material.tabs.TabLayout>
+
+    <!-- CONTENT -->
+    <FrameLayout
+        android:id="@+id/aboutContentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_weight="1">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <TextView
+                android:id="@+id/textAboutContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:lineSpacingExtra="6dp"
+                android:textColor="@color/black"
+                android:paddingBottom="24dp"/>
+
+        </ScrollView>
+
+    </FrameLayout>
+
+
+
+</LinearLayout>

@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.paymyfinesstep.R
 import com.example.paymyfinesstep.api.PaymentHistoryItem
 
-class PaymentHistoryFragment : Fragment(R.layout.fragment_payment_history) {
+class PaymentHistoryFragment : Fragment(R.layout.fragment_payment_history) {/*
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -23,5 +23,5 @@ class PaymentHistoryFragment : Fragment(R.layout.fragment_payment_history) {
         )
 
         recycler.adapter = PaymentHistoryAdapter(sample)
-    }
+    }*/
 }

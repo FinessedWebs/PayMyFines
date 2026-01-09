@@ -70,3 +70,8 @@ data class SessionResponse(
     val timeZoneId: String?,
     val paymentProviderName: String?
 )
+
+data class UpdateProfileRequest(
+    val fullName: String,
+    val email: String
+)

@@ -5,6 +5,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
 
 data class SignupRequest(
     val fullName: String,
@@ -40,6 +41,11 @@ data class ReactivateRequest(
     val email: String
 )
 
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String
+)
+
 
 
 
@@ -68,7 +74,15 @@ interface AuthApi {
     @POST("/auth/deactivate")
     suspend fun deactivateAccount(): Response<Unit>
 
+    @PUT("auth/profile-update")
+    suspend fun updateProfile(
+        @Body request: UpdateProfileRequest
+    ): UserResponse
 
+    @POST("auth/change-password")
+    suspend fun changePassword(
+        @Body request: ChangePasswordRequest
+    ): Response<Unit>
 
 
 }

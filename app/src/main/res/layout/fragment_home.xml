@@ -370,14 +370,16 @@
                             android:gravity="center_vertical"
                             android:paddingHorizontal="16dp">
 
-                            <ImageView
-                                android:id="@+id/imageProfileAvatar"
+                            <com.google.android.material.imageview.ShapeableImageView
+                                android:id="@+id/imageHomeProfileAvatar"
                                 android:layout_width="60dp"
                                 android:layout_height="60dp"
-                                android:background="@drawable/bg_avatar_circle"
-                                android:padding="8dp"
-                                android:src="@drawable/ic_person"
-                                app:tint="@android:color/white"/>
+                                android:scaleType="centerCrop"
+                                android:padding="0dp"
+                                android:background="@color/offWhite"
+                                app:shapeAppearanceOverlay="@style/CircleImage"
+                                android:src="@drawable/ic_person"/>
+
 
                             <LinearLayout
                                 android:layout_width="0dp"

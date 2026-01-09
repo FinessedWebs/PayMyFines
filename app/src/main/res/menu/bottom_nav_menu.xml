@@ -8,17 +8,17 @@
         android:icon="@drawable/ic_person"
         app:showAsAction="ifRoom" />
 
-    <!--<item
-        android:id="@+id/familyFragment"
-        android:title="Family"
-        android:icon="@drawable/ic_family"
-        app:showAsAction="ifRoom" />-->
-
     <item
+        android:id="@+id/aboutFragment"
+    android:icon="@drawable/ic_info"
+    android:title="About"
+        app:showAsAction="ifRoom" />
+
+    <!--<item
         android:id="@+id/vehicleFragment"
         android:title="Vehicles"
         android:icon="@drawable/ic_vehicle"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="ifRoom" />-->
 
     <item
         android:id="@+id/notificationsFragment"

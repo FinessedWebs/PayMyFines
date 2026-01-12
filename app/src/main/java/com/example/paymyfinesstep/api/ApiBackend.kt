@@ -36,5 +36,3 @@ object ApiBackend {
         return retrofitInstance.create(service)
     }
 }
-
-

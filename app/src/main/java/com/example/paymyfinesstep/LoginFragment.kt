@@ -76,6 +76,8 @@ class LoginFragment : Fragment() {
                         .putString("idNumber", body.idNumber)
                         .apply()
 
+                    requireActivity().invalidateOptionsMenu()
+
                     withContext(Dispatchers.Main) {
                         Toast.makeText(requireContext(), "Welcome back!", Toast.LENGTH_SHORT).show()
                         findNavController().navigate(R.id.action_loginFragment_to_homeFragment)

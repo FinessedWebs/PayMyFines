@@ -131,7 +131,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val profileModes = listOf("Individual", "Family")
 
 
-    private lateinit var textCartBadge: TextView
+    /*private lateinit var textCartBadge: TextView*/
     private lateinit var layoutFullName: TextInputLayout
     private lateinit var layoutEmail: TextInputLayout
 
@@ -166,7 +166,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // ------------------------------------------------------
         // 2. MENU HOST
         // ------------------------------------------------------
-        val menuHost: MenuHost = requireActivity()
+        /*val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
 
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
@@ -190,7 +190,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
                 return false
             }
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)*/
 
 
 
@@ -215,13 +215,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         recyclerFamilyUsers = view.findViewById(R.id.recyclerFamilyUsers)
         editSearch = view.findViewById(R.id.editSearch)
         textUsersFound = view.findViewById(R.id.textUsersFound)
+/*
         textCartBadge = view.findViewById(R.id.textCartBadge)
+*/
         profileInfoRow = view.findViewById(R.id.profileInfoRow)
 
 
         val btnSearch = view.findViewById<ImageButton>(R.id.btnSearch)
         val btnFilter = view.findViewById<ImageButton>(R.id.btnFilter)
-        val btnCart = view.findViewById<ImageButton>(R.id.btnCart)
+        /*val btnCart = view.findViewById<ImageButton>(R.id.btnCart)*/
 
 
 
@@ -295,11 +297,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // ------------------------------------------------------
         // 7. CART
         // ------------------------------------------------------
-        btnCart.setOnClickListener {
+       /*btnCart.setOnClickListener {
             findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToCartFragment())
-        }
+        }*/
 
-        updateCartBadge()
+        /*updateCartBadge()*/
 
         profileInfoRow.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_profileDetailsFragment
@@ -474,7 +476,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onResume() {
         super.onResume()
-        updateCartBadge()
+        /*updateCartBadge()*/
         loadProfileAvatar()
         refreshProfileAvatar()
     }
@@ -531,7 +533,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
 
 
-    private fun updateCartBadge() {
+    /*private fun updateCartBadge() {
         lifecycleScope.launch {
             val list = CartManager.getCart(requireContext())
 
@@ -542,7 +544,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 textCartBadge.text = list.size.toString()
             }
         }
-    }
+    }*/
 
 
 

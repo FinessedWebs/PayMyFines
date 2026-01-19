@@ -9,6 +9,15 @@ data class UserProfile(
     val fines: List<IForceItem>
 )
 
+data class FineUiItem(
+    val noticeNumber: String,
+    val vehicleReg: String,
+    val description: String,
+    val location: String,
+    val offenceDate: String,
+    val amountText: String,
+    val isPaid: Boolean)
+
 sealed class HomeListItem {
     data class UserHeader(val user: UserProfile, val expanded: Boolean) : HomeListItem()
     data class UserSummary(

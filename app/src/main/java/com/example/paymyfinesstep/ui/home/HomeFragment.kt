@@ -33,7 +33,8 @@ import com.example.paymyfinesstep.FilterBottomSheet
 import com.example.paymyfinesstep.FilterOptions
 import com.example.paymyfinesstep.FinesAdapter
 import com.example.paymyfinesstep.HomeGroupedAdapter
-import com.example.paymyfinesstep.InfringementsApi
+import com.example.paymyfinesstep.api.InfringementsApi
+
 import com.example.paymyfinesstep.R
 import com.example.paymyfinesstep.api.ApiBackend
 import com.example.paymyfinesstep.api.FamilyApi
@@ -92,6 +93,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private var showUnpaid = true   // toggle setting
     private var allFines: List<IForceItem> = emptyList()
+    private var openFines: List<IForceItem> = emptyList()
+    private var closedFines: List<IForceItem> = emptyList()
+
     private lateinit var dropdownProfileMode: MaterialAutoCompleteTextView
     private lateinit var inputLayoutProfileMode: com.google.android.material.textfield.TextInputLayout
 
@@ -134,6 +138,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     /*private lateinit var textCartBadge: TextView*/
     private lateinit var layoutFullName: TextInputLayout
     private lateinit var layoutEmail: TextInputLayout
+    private var hasLoadedOnce = false
+    private var isLoading = false
+
+
+
 
 
 
@@ -152,7 +161,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         binding.fabAddMember.setOnClickListener {
             AddFamilyMemberDialogFragment {
-                loadFines()
+                if (!hasLoadedOnce) {
+                    hasLoadedOnce = true
+                    loadFines()
+                } else {
+                    // ✅ Just show what we already have
+                    updateList()
+                }
+
             }.show(childFragmentManager, "add_family_dialog")
         }
 
@@ -207,10 +223,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         recyclerFines = view.findViewById(R.id.recyclerFines)
         progress = view.findViewById(R.id.progressBar)
 
-        btnUnpaid = view.findViewById(R.id.btnUnpaid)
+       /* btnUnpaid = view.findViewById(R.id.btnUnpaid)
         btnPaid = view.findViewById(R.id.btnPaid)
         slidingPill = view.findViewById(R.id.viewSlidingPill)
-        toggleContainer = view.findViewById(R.id.togglePaidState)
+        toggleContainer = view.findViewById(R.id.togglePaidState)*/
 
         recyclerFamilyUsers = view.findViewById(R.id.recyclerFamilyUsers)
         editSearch = view.findViewById(R.id.editSearch)
@@ -342,7 +358,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         setupRecycler()
-        setupToggleAnimation()
+        /*setupToggleAnimation()*/
 
         resetFabMenu()
         setupFabMenu()
@@ -810,105 +826,137 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     // -----------------------------------------------------------
     // LOAD FINES (ONLY INDIVIDUAL)
     // -----------------------------------------------------------
-    private fun loadFines() {
+    private fun loadFines(forceReload: Boolean = false) {
+
+        if (isLoading) return
+
+        // ✅ If we already loaded before and user is not forcing reload, just update UI
+        if (hasLoadedOnce && !forceReload) {
+            updateList()
+            return
+        }
+
+        isLoading = true
         progress.visibility = View.VISIBLE
 
         lifecycleScope.launch {
             try {
+
                 val fines = withContext(Dispatchers.IO) {
 
-                    // ---------------------------- INDIVIDUAL ----------------------------
                     if (currentMode == ProfileMode.INDIVIDUAL) {
-                        val response = api.getInfringements()
 
-                        val error = response.errorDetails?.firstOrNull()
+                        // -------------------------------
+                        // OPEN FINES
+                        // -------------------------------
+                        val openResp = api.getInfringements()
+                        val openError = openResp.errorDetails?.firstOrNull()
 
-                        if (error?.statusCode == 99) {
-                            val msg = error.message?.lowercase() ?: ""
+                        if (openError?.statusCode == 99) {
+                            val msg = openError.message?.lowercase() ?: ""
 
                             withContext(Dispatchers.Main) {
                                 when {
                                     msg.contains("daily limit") -> showDailyLimitError()
                                     msg.contains("no results") -> showNoResultsError()
-                                    else -> showGenericError(error.message)
+                                    else -> showGenericError(openError.message)
                                 }
                             }
-
                             return@withContext emptyList<IForceItem>()
                         }
 
-                        return@withContext response.iForce ?: emptyList()
-                    }
+                        openFines = openResp.iForce.orEmpty()
 
+                        // -------------------------------
+                        // CLOSED FINES (IMPORTANT FIX)
+                        // -------------------------------
+                        val closedResp = api.getClosedInfringements()
 
-                    // ---------------------------- FAMILY ----------------------------
-                    // ----------------------------
-// FAMILY MODE
-// ----------------------------
-                    val familyList = familyApi.getFamilyMembers()
-                    fullFamilyList = familyList
-                    familyMembers = familyList
+                        val hasBackendError = closedResp.errorDetails?.isNotEmpty() == true
+                        val tempClosed = closedResp.iForce.orEmpty()
 
-// Update UI with family list
-                    withContext(Dispatchers.Main) {
-                        textUsersFound.text = "${familyList.size} Users Found"
-                        familyAdapter.update(familyList.toMutableList(), emptyList())
-                    }
-
-                    var dailyLimitReached = false
-                    val collectedFines = mutableListOf<IForceItem>()
-
-                    for (member in familyList) {
-                        val resp = api.getFamilyInfringements(member.idNumber)
-
-                        val err = resp.errorDetails?.firstOrNull()
-
-                        val isDailyLimit = err?.statusCode == 99 &&
-                                err.message?.contains("daily limit", ignoreCase = true) == true
-
-                        if (isDailyLimit) {
-                            dailyLimitReached = true
-                            continue
+                        // ✅ Only overwrite if response actually returned paid fines
+                        // ✅ OR there was no backend error
+                        if (tempClosed.isNotEmpty() || !hasBackendError) {
+                            closedFines = tempClosed
+                        } else {
+                            Log.w(
+                                "HOME",
+                                "Closed fines returned empty + errorDetails -> keeping cached closedFines (${closedFines.size})"
+                            )
                         }
 
-                        // Do NOT treat "No results found" as a limit error.
-                        // Just skip fines for that member.
-                        if (err != null) {
-                            continue
-                        }
+                        return@withContext openFines + closedFines
 
-                        resp.iForce?.forEach { fine ->
-                            collectedFines.add(fine.copy(userIdNumber = member.idNumber))
-                        }
-                    }
+                    } else {
 
+                        // -------------------------------
+                        // FAMILY MODE
+                        // -------------------------------
+                        val familyList = familyApi.getFamilyMembers()
+                        fullFamilyList = familyList
+                        familyMembers = familyList
 
-                    // Update UI with whatever fines were successfully retrieved
-                    withContext(Dispatchers.Main) {
-                        familyAdapter.update(familyList.toMutableList(), collectedFines)
-                    }
-
-                    // After loading everything, show the limit warning once
-                    if (dailyLimitReached) {
                         withContext(Dispatchers.Main) {
-                            showDailyLimitError()
+                            textUsersFound.text = "${familyList.size} Users Found"
+                            familyAdapter.update(familyList.toMutableList(), emptyList())
                         }
+
+                        val collectedFines = mutableListOf<IForceItem>()
+
+                        for (member in familyList) {
+                            val resp = api.getFamilyInfringements(member.idNumber)
+
+                            val err = resp.errorDetails?.firstOrNull()
+
+                            val isDailyLimit = err?.statusCode == 99 &&
+                                    err.message?.contains("daily limit", ignoreCase = true) == true
+
+                            if (isDailyLimit) continue
+                            if (err != null) continue
+
+                            resp.iForce?.forEach { fine ->
+                                collectedFines.add(
+                                    fine.copy(userIdNumber = member.idNumber)
+                                )
+                            }
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            familyAdapter.update(familyList.toMutableList(), collectedFines)
+                        }
+
+                        return@withContext collectedFines
                     }
-
-                    return@withContext collectedFines
-
                 }
 
                 allFines = fines
+                hasLoadedOnce = true
+
+                Log.d(
+                    "HOME",
+                    "Loaded. showUnpaid=$showUnpaid open=${openFines.size} closed=${closedFines.size}"
+                )
+
                 updateList()
 
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error loading fines: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Error loading fines: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+
             } finally {
+                isLoading = false
                 progress.visibility = View.GONE
             }
         }
     }
+
+
+
+
 
 
     private fun showDailyLimitError() {
@@ -1004,38 +1052,20 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     // -----------------------------------------------------------
     private fun updateList() {
 
-        // -------------------------------
-        // STEP 1 — FILTER UNPAID / PAID
-        // -------------------------------
-        val filteredPaid = if (showUnpaid) {
-            allFines.filter { (it.amountDueInCents ?: 0) > 0 }
-        } else {
-            allFines.filter {
-                (it.amountDueInCents ?: 0) <= 0 ||
-                        (it.status?.lowercase()?.contains("paid") == true)
-            }
-        }
+        val baseList: List<IForceItem> =
+            if (showUnpaid) openFines else closedFines
 
-
-        // -------------------------------
-        // STEP 2 — SEARCH
-        // -------------------------------
-        val afterSearch = filteredPaid.filter {
+        val afterSearch = baseList.filter { fine ->
             val q = searchQuery.lowercase()
 
-            it.chargeDescriptions?.joinToString(" ")?.lowercase()?.contains(q) == true ||
-                    (it.offenceLocation?.lowercase()?.contains(q) == true) ||
-                    (it.vehicleLicenseNumber?.lowercase()?.contains(q) == true) ||
-                    (it.noticeNumber?.lowercase()?.contains(q) == true)
+            fine.chargeDescriptions?.joinToString(" ")?.lowercase()?.contains(q) == true ||
+                    fine.offenceLocation?.lowercase()?.contains(q) == true ||
+                    fine.vehicleLicenseNumber?.lowercase()?.contains(q) == true ||
+                    fine.noticeNumber?.lowercase()?.contains(q) == true
         }
 
-
-        // -------------------------------
-        // STEP 3 — FILTER OPTIONS
-        // -------------------------------
         val afterFilters = afterSearch.filter { fine ->
 
-            // --- STATUS ---
             if (activeFilters.statuses.isNotEmpty()) {
                 val statusMatch = activeFilters.statuses.any { selected ->
                     fine.status?.lowercase()?.contains(selected.lowercase()) == true
@@ -1043,9 +1073,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (!statusMatch) return@filter false
             }
 
-            // --- SEVERITY ---
             if (activeFilters.severities.isNotEmpty()) {
-                val amount = (fine.amountDueInCents ?: 0)
+                val amount = fine.amountDueInCents ?: 0
 
                 val severity = when {
                     amount >= 100_000 -> "High"
@@ -1057,22 +1086,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (!activeFilters.severities.contains(severity)) return@filter false
             }
 
-            // --- PAYMENT FLAGS ---
             if (activeFilters.paymentFlags.isNotEmpty()) {
                 val eligible = if (fine.paymentAllowed == true) "Allowed" else "NotAllowed"
-
                 if (!activeFilters.paymentFlags.contains(eligible)) return@filter false
             }
 
-            // --- DATE RANGE ---
             if (activeFilters.dateRange != null) {
                 if (!isWithinRange(fine.offenceDate ?: "", activeFilters.dateRange))
                     return@filter false
             }
 
-            // --- ISSUING AUTHORITY ---
             if (activeFilters.issuingAuthorities.isNotEmpty()) {
-
                 val authority = fine.issuingAuthority?.lowercase() ?: ""
 
                 val match = activeFilters.issuingAuthorities.any { sel ->
@@ -1085,12 +1109,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             true
         }
 
-
-        // -------------------------------
-        // STEP 4 — APPLY RESULTS
-        // -------------------------------
         if (currentMode == ProfileMode.INDIVIDUAL) {
-
             textTopFineCount.text =
                 "${afterFilters.size} ${if (showUnpaid) "unpaid" else "paid"} fines found"
 
@@ -1100,10 +1119,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 familyMembers.toMutableList(),
                 afterFilters
             )
-
-
         }
     }
+
 
 
 
@@ -1113,11 +1131,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     // TOGGLE (UNPAID / PAID)
     // -----------------------------------------------------------
     private fun setupToggleAnimation() {
-
-        toggleContainer.post {
-            slidingPill.layoutParams.width = toggleContainer.width / 2
-            slidingPill.requestLayout()
-        }
 
         btnUnpaid.setOnClickListener {
             showUnpaid = true
@@ -1138,6 +1151,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
             updateList()
         }
+
+
     }
 
     private fun animatePill(left: Boolean) {

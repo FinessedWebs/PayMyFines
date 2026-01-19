@@ -185,7 +185,7 @@
                 android:paddingTop="20dp">
 
                 <!-- SEGMENTED TOGGLE -->
-                <com.google.android.material.card.MaterialCardView
+                <!--<com.google.android.material.card.MaterialCardView
                     android:id="@+id/segmentCard"
                     android:layout_width="match_parent"
                     android:layout_height="54dp"
@@ -196,8 +196,8 @@
                     app:strokeWidth="1dp"
                     app:strokeColor="@color/segmentInactive">
 
-                    <!-- SEGMENTED TOGGLE -->
-                    <FrameLayout
+                    &lt;!&ndash; SEGMENTED TOGGLE &ndash;&gt;
+                    &lt;!&ndash;<FrameLayout
                         android:id="@+id/togglePaidState"
                         android:layout_width="match_parent"
                         android:layout_height="54dp"
@@ -205,7 +205,7 @@
                         android:padding="5dp"
                         >
 
-                        <!-- Sliding pill -->
+                        &lt;!&ndash; Sliding pill &ndash;&gt;
                         <View
                             android:id="@+id/viewSlidingPill"
                             android:layout_width="0dp"
@@ -213,7 +213,7 @@
                             android:layout_gravity="start"
                             android:background="@drawable/bg_segment_pill" />
 
-                        <!-- Horizontal buttons (transparent) -->
+                        &lt;!&ndash; Horizontal buttons (transparent) &ndash;&gt;
                         <LinearLayout
                             android:orientation="horizontal"
                             android:layout_width="match_parent"
@@ -242,7 +242,7 @@
                                 android:textStyle="bold"/>
                         </LinearLayout>
 
-                       <!-- <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+                       &lt;!&ndash; <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
                             android:id="@+id/fabMain"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -288,16 +288,16 @@
                                 android:backgroundTint="@color/primaryColor"
                                 android:tint="@android:color/white"/>
 
-                        </LinearLayout>-->
+                        </LinearLayout>&ndash;&gt;
 
 
-                    </FrameLayout>
+                    </FrameLayout>&ndash;&gt;
 
 
 
 
 
-                </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>-->
 
                 <LinearLayout
                     android:id="@+id/familyHeaderRow"
@@ -414,12 +414,12 @@
                                     android:textColor="@color/gray"/>
                             </LinearLayout>
 
-                            <ImageView
+                            <!--<ImageView
                                 android:id="@+id/imageMessage"
                                 android:layout_width="28dp"
                                 android:layout_height="28dp"
                                 android:src="@drawable/ic_message"
-                                app:tint="@android:color/white"/>
+                                app:tint="@android:color/white"/>-->
                         </LinearLayout>
 
                         <!-- SUMMARY SHOULD TOUCH FULL WIDTH -->

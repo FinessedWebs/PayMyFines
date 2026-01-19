@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginTop="70dp"
+
     android:color="@color/offWhite"
     android:padding="16dp">
 
@@ -224,6 +224,36 @@
                     android:text="SECT. 59(4)(B) ACT 93/1996 ..."
                     android:textColor="#9CA3AF"
                     android:textSize="13sp" />
+
+                <!-- Evidence Images -->
+                <TextView
+                    android:id="@+id/textEvidenceLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="6dp"
+                    android:text="Evidence"
+                    android:textColor="#E5E7EB"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerEvidenceImages"
+                    android:layout_width="match_parent"
+                    android:layout_height="110dp"
+                    android:visibility="gone"
+                    android:paddingBottom="8dp" />
+
+                <TextView
+                    android:id="@+id/textNoEvidence"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Evidence images are only available for unpaid fines."
+                    android:textColor="#9CA3AF"
+                    android:textSize="13sp"
+                    android:visibility="gone"
+                    android:paddingBottom="8dp" />
+
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

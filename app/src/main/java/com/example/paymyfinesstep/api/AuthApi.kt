@@ -84,5 +84,12 @@ interface AuthApi {
         @Body request: ChangePasswordRequest
     ): Response<Unit>
 
+    @GET("infringements")
+    suspend fun getMyInfringements(): Response<InfringementResponse>
+
+    @GET("infringements/closed")
+    suspend fun getClosedInfringements(): Response<InfringementResponse>
+
+
 
 }

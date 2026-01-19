@@ -32,13 +32,24 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
+        <!-- ✅ NEW: message/description -->
         <TextView
-            android:id="@+id/textMeta"
-            android:text="R300 • Unpaid"
-            android:textStyle="bold"
-            android:textSize="14sp"
+            android:id="@+id/textMessage"
+            android:text="A new fine was issued to your account."
+            android:textSize="13sp"
+            android:textColor="#444"
             android:layout_marginTop="8dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/textMeta"
+            android:text="90/00278/803/001449"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
     </LinearLayout>
+
 </androidx.cardview.widget.CardView>

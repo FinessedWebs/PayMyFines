@@ -9,8 +9,17 @@ import java.util.concurrent.TimeUnit
 
 object ApiBackend {
 
-    private const val BASE_URL = "http://10.0.2.2:5089/" //Test On Emulator
+    private const val BASE_URL_EMULATOR = "http://10.0.2.2:5089/"           // Emulator
+    private const val BASE_URL_PHONE = "http://10.249.129.33:5089/"         // Your PC work WiFi IP
+    /*private const val BASE_URL_PHONE = "http://192.168.3.109:5089/"*/     // Your PC home WiFi IP
 
+    fun baseUrl(): String {
+        return if (android.os.Build.FINGERPRINT.contains("generic")) {
+            BASE_URL_EMULATOR
+        } else {
+            BASE_URL_PHONE
+        }
+    }
 
     fun <T> create(context: Context, service: Class<T>): T {
 
@@ -28,7 +37,7 @@ object ApiBackend {
             .build()
 
         val retrofitInstance = Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(baseUrl())
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

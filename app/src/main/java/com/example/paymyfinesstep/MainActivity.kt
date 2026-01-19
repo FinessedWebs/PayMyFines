@@ -1,33 +1,28 @@
 package com.example.paymyfinesstep
 
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
+import com.example.paymyfinesstep.api.ApiBackend
+import com.example.paymyfinesstep.api.NotificationsApi
 import com.example.paymyfinesstep.cart.CartManager
 import com.example.paymyfinesstep.databinding.ActivityMainBinding
+import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
-
-    private val cartPrefs by lazy {
-        getSharedPreferences(CartManager.PREF_NAME, MODE_PRIVATE)
-    }
-
-    private val cartListener =
-        SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == CartManager.cartKey(this)) {
-                updateCartBadge()
-            }
-        }
-
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var bottomNav: BottomNavigationView
@@ -37,6 +32,10 @@ class MainActivity : AppCompatActivity() {
         (supportFragmentManager.findFragmentById(
             R.id.nav_host_fragment_activity_main
         ) as NavHostFragment).navController
+    }
+
+    private val notificationsApi by lazy {
+        ApiBackend.create(this, NotificationsApi::class.java)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,9 +50,6 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.homeToolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        // ---------------------------
-        // APP BAR CONFIGURATION
-        // ---------------------------
         val appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.homeFragment,
@@ -71,14 +67,14 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setupWithNavController(navController)
 
         // ---------------------------
-        // NAV GRAPH
+        // NAV GRAPH START
         // ---------------------------
         val graph = navController.navInflater.inflate(R.navigation.nav_graph)
         graph.setStartDestination(R.id.loginFragment)
         navController.graph = graph
 
         // ---------------------------
-        // DESTINATION-BASED UI CONTROL
+        // DESTINATION UI CONTROL
         // ---------------------------
         navController.addOnDestinationChangedListener { _, destination, _ ->
 
@@ -107,16 +103,23 @@ class MainActivity : AppCompatActivity() {
                 findItem(R.id.action_logout)?.isVisible = showTopMenu
             }
 
-            // ✅ Update badge ONLY when toolbar menu is visible
+            // Update cart badge only when visible
             if (showTopMenu) {
                 updateCartBadge()
             }
-        }
 
+            // ✅ Refresh notification badge when switching screens
+            if (destination.id == R.id.notificationsFragment ||
+                destination.id == R.id.homeFragment ||
+                destination.id == R.id.aboutFragment
+            ) {
+                refreshNotificationsBadge()
+            }
+        }
     }
 
     // ---------------------------
-    // MENU INFLATION (ONCE)
+    // MENU (TOP RIGHT)
     // ---------------------------
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_top, menu)
@@ -126,7 +129,6 @@ class MainActivity : AppCompatActivity() {
 
         cartBadge = actionView.findViewById(R.id.textCartBadge)
 
-        // Forward click from custom actionView
         actionView.setOnClickListener {
             onOptionsItemSelected(cartItem)
         }
@@ -135,9 +137,6 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    // ---------------------------
-    // MENU ACTIONS
-    // ---------------------------
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
 
@@ -173,40 +172,70 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ---------------------------
-    // BADGE UPDATES
+    // BADGES
     // ---------------------------
-
-    override fun onStart() {
-        super.onStart()
-        cartPrefs.registerOnSharedPreferenceChangeListener(cartListener)
-    }
-
-
     override fun onResume() {
         super.onResume()
+
+        // refresh both
         updateCartBadge()
+        refreshNotificationsBadge()
     }
 
-    override fun onStop() {
-        super.onStop()
-        cartPrefs.unregisterOnSharedPreferenceChangeListener(cartListener)
-    }
-
-
-    /** Call this from fragments after add/remove cart actions */
     fun refreshCartBadge() {
         updateCartBadge()
     }
 
     private fun updateCartBadge() {
-        val count = CartManager.getCart(this).size
+        try {
+            val count = CartManager.getCart(this).size
 
-        if (count > 0) {
-            cartBadge?.visibility = View.VISIBLE
-            cartBadge?.text = count.toString()
-        } else {
+            if (count > 0) {
+                cartBadge?.visibility = View.VISIBLE
+                cartBadge?.text = count.toString()
+            } else {
+                cartBadge?.visibility = View.GONE
+            }
+        } catch (_: Exception) {
             cartBadge?.visibility = View.GONE
         }
+    }
+
+    // ✅ Bottom navigation notification badge
+    fun refreshNotificationsBadge() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val resp = notificationsApi.getUnreadCount()
+
+                if (!resp.isSuccessful || resp.body() == null) return@launch
+
+                val unread = resp.body()!!.unread
+
+                withContext(Dispatchers.Main) {
+                    applyBottomNavBadge(unread)
+                }
+
+            } catch (_: Exception) {
+                // if fails, hide badge (optional)
+                withContext(Dispatchers.Main) {
+                    applyBottomNavBadge(0)
+                }
+            }
+        }
+    }
+
+    private fun applyBottomNavBadge(unread: Int) {
+        val menuId = R.id.notificationsFragment
+
+        if (unread <= 0) {
+            bottomNav.removeBadge(menuId)
+            return
+        }
+
+        val badge: BadgeDrawable = bottomNav.getOrCreateBadge(menuId)
+        badge.isVisible = true
+        badge.number = unread
+        badge.maxCharacterCount = 3
     }
 
     // ---------------------------
@@ -222,6 +251,10 @@ class MainActivity : AppCompatActivity() {
             .remove("idNumber")
             .apply()
 
+        // remove badges
+        bottomNav.removeBadge(R.id.notificationsFragment)
+        cartBadge?.visibility = View.GONE
+
         navController.navigate(
             R.id.loginFragment,
             null,
@@ -230,5 +263,4 @@ class MainActivity : AppCompatActivity() {
                 .build()
         )
     }
-
 }

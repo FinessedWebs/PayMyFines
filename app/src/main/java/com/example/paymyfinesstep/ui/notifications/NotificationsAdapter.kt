@@ -8,12 +8,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.paymyfinesstep.R
 
 class NotificationsAdapter(
-    private var items: List<NotificationItem>
+    private var items: List<NotificationItem>,
+    private val onClick: (NotificationItem) -> Unit
 ) : RecyclerView.Adapter<NotificationsAdapter.VH>() {
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.textTitle)
         val date: TextView = view.findViewById(R.id.textDate)
+        val message: TextView = view.findViewById(R.id.textMessage)
         val meta: TextView = view.findViewById(R.id.textMeta)
     }
 
@@ -27,7 +29,10 @@ class NotificationsAdapter(
         val item = items[position]
         holder.title.text = item.title
         holder.date.text = item.date
+        holder.message.text = item.message
         holder.meta.text = item.meta
+
+        holder.itemView.setOnClickListener { onClick(item) }
     }
 
     override fun getItemCount(): Int = items.size

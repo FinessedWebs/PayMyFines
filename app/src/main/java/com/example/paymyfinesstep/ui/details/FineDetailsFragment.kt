@@ -34,6 +34,9 @@ import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+
 
 class FineDetailsFragment : Fragment(R.layout.fragment_fine_details) {
 
@@ -58,6 +61,9 @@ class FineDetailsFragment : Fragment(R.layout.fragment_fine_details) {
 
         val btnAddToCart = view.findViewById<MaterialButton>(R.id.btnAddToCart)
         val btnDownload = view.findViewById<MaterialButton>(R.id.btnDownload)
+        val recyclerEvidence = view.findViewById<RecyclerView>(R.id.recyclerEvidenceImages)
+        val textNoEvidence = view.findViewById<TextView>(R.id.textNoEvidence)
+
 
         // Populate
         tvNotice.text = "Notice: ${fine.noticeNumber ?: "—"}"
@@ -67,6 +73,33 @@ class FineDetailsFragment : Fragment(R.layout.fragment_fine_details) {
         tvVehicle.text = "Vehicle: ${fine.vehicleLicenseNumber ?: "—"}"
         tvCourtDate.text = "Court Date: ${formatCourtDate(fine.courtDate)}"
         tvAmount.text = "Amount: ${formatAmount(fine.amountDueInCents)}"
+
+        // ✅ Evidence Images (Carousel)
+        // ✅ Evidence Images (Only show for UUID tokens = unpaid evidence)
+        val rawTokens = fine.images.orEmpty()
+
+// Paid fines often have tokens like "19560991" which will never work on stream endpoint
+        val tokens = rawTokens.filter { isUuidToken(it) }
+
+        if (tokens.isEmpty()) {
+            recyclerEvidence.visibility = View.GONE
+            textNoEvidence.visibility = View.VISIBLE
+        } else {
+            textNoEvidence.visibility = View.GONE
+            recyclerEvidence.visibility = View.VISIBLE
+
+            val evidenceAdapter = EvidenceImagesAdapter(tokens) { clickedToken ->
+                EvidenceImageDialog(clickedToken)
+                    .show(parentFragmentManager, "evidence_fullscreen")
+            }
+
+            recyclerEvidence.layoutManager =
+                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+
+            recyclerEvidence.adapter = evidenceAdapter
+        }
+
+
 
         // ✅ Add to cart using CartManager + CartItem
         btnAddToCart.setOnClickListener {
@@ -101,6 +134,13 @@ class FineDetailsFragment : Fragment(R.layout.fragment_fine_details) {
 
 
     }
+
+    private fun isUuidToken(token: String): Boolean {
+        return token.matches(
+            Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+        )
+    }
+
 
     // ✅ NEW IMPLEMENTATION – uses CartItem instead of SharedPreferences string set
     private fun addToCart(fine: IForceItem) {

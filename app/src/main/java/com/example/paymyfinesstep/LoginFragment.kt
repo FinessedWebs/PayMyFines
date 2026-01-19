@@ -1,6 +1,7 @@
 package com.example.paymyfinesstep
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -58,6 +59,9 @@ class LoginFragment : Fragment() {
         }
 
         return v
+
+
+
     }
 
     private fun loginUser(email: String, password: String) {

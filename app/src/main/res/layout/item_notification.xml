@@ -14,6 +14,14 @@
         android:padding="16dp"
         android:orientation="vertical">
 
+        <View
+            android:id="@+id/viewUnreadDot"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@drawable/bg_badge_red"
+            android:visibility="gone"/>
+
+
         <TextView
             android:id="@+id/textTitle"
             android:text="Speeding Fine Issued"

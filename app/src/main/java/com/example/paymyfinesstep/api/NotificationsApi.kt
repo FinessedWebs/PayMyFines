@@ -17,12 +17,21 @@ interface NotificationsApi {
     @GET("api/Notifications/unread-count")
     suspend fun getUnreadCount(): Response<UnreadCountResponse>
 
+    // ✅ NEW: inbox unread count (only NEW_FINE + PAYMENT_REMINDER)
+    @GET("api/Notifications/unread-count/inbox")
+    suspend fun getUnreadInboxCount(): Response<UnreadCountResponse>
+
     @POST("api/Notifications/mark-read/{id}")
     suspend fun markRead(@Path("id") id: String): Response<MarkReadResponse>
+
+    // ✅ NEW: mark all read
+    @POST("api/Notifications/mark-all-read")
+    suspend fun markAllRead(): Response<MarkAllReadResponse>
 }
 
 data class UnreadCountResponse(val unread: Int)
 data class MarkReadResponse(val success: Boolean)
+data class MarkAllReadResponse(val marked: Int)
 
 data class NotificationDto(
     val id: String,

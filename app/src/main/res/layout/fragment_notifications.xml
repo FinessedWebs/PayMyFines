@@ -37,6 +37,22 @@
             android:background="@drawable/bg_toggle_inactive"/>
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/textEmptyNotifications"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:padding="16dp"
+        android:gravity="center"
+        android:text="No notifications"
+        android:textSize="14sp"
+        android:textColor="#6B7280"
+        android:visibility="gone" />
+
+
+
     <!-- LIST -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerNotifications"

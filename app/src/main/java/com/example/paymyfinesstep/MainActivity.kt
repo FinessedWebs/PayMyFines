@@ -1,6 +1,7 @@
 package com.example.paymyfinesstep
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -207,22 +208,27 @@ class MainActivity : AppCompatActivity() {
             try {
                 val resp = notificationsApi.getUnreadCount()
 
-                if (!resp.isSuccessful || resp.body() == null) return@launch
+                if (!resp.isSuccessful || resp.body() == null) {
+                    withContext(Dispatchers.Main) { applyBottomNavBadge(0) }
+                    return@launch
+                }
+
 
                 val unread = resp.body()!!.unread
+                Log.d("BADGE", "Unread inbox = $unread")
 
                 withContext(Dispatchers.Main) {
                     applyBottomNavBadge(unread)
                 }
 
             } catch (_: Exception) {
-                // if fails, hide badge (optional)
                 withContext(Dispatchers.Main) {
                     applyBottomNavBadge(0)
                 }
             }
         }
     }
+
 
     private fun applyBottomNavBadge(unread: Int) {
         val menuId = R.id.notificationsFragment

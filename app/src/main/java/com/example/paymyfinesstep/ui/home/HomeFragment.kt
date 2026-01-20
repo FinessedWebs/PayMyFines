@@ -1130,7 +1130,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     // -----------------------------------------------------------
     // TOGGLE (UNPAID / PAID)
     // -----------------------------------------------------------
-    private fun setupToggleAnimation() {
+    /*private fun setupToggleAnimation() {
 
         btnUnpaid.setOnClickListener {
             showUnpaid = true
@@ -1153,9 +1153,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
 
-    }
+    }*/
 
-    private fun animatePill(left: Boolean) {
+    /*private fun animatePill(left: Boolean) {
         val pillWidth = slidingPill.width
         val target = if (left) 0 else pillWidth
 
@@ -1163,7 +1163,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             .translationX(target.toFloat())
             .setDuration(250)
             .start()
-    }
+    }*/
 
 
     // -----------------------------------------------------------

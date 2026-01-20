@@ -10,7 +10,7 @@
         <domain includeSubdomains="true">10.249.129.33</domain>
 
         <!-- Your PC IP on home WiFi -->
-        <domain includeSubdomains="true">192.168.3.109</domain>
+        <domain includeSubdomains="true">192.168.0.194</domain>
     </domain-config>
 
 </network-security-config>

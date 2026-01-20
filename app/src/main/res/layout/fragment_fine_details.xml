@@ -248,7 +248,7 @@
                     android:id="@+id/textNoEvidence"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Evidence images are only available for unpaid fines."
+                    android:text="No evidence images available for this fine."
                     android:textColor="#9CA3AF"
                     android:textSize="13sp"
                     android:visibility="gone"

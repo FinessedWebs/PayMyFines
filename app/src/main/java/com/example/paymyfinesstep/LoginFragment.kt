@@ -72,12 +72,16 @@ class LoginFragment : Fragment() {
                 if (response.isSuccessful && response.body() != null) {
                     val body = response.body()!!
 
-                    // Save token + user info
+                    // ✅ Save token + user info
                     prefs.edit()
                         .putString("jwt_token", body.token)
                         .putString("fullName", body.fullName)
                         .putString("email", body.email)
                         .putString("idNumber", body.idNumber)
+
+                        // ✅ Force mode back to INDIVIDUAL after login
+                        .putString("profile_mode", "INDIVIDUAL")
+
                         .apply()
 
                     requireActivity().invalidateOptionsMenu()
@@ -86,13 +90,11 @@ class LoginFragment : Fragment() {
                         Toast.makeText(requireContext(), "Welcome back!", Toast.LENGTH_SHORT).show()
                         findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                     }
-                }
-                else {
-                    // read backend message
+                } else {
+
                     val errorBody = response.errorBody()?.string()
                     println("LOGIN ERROR BODY = $errorBody")
 
-                    // ⭐ Check deactivated account BEFORE showing invalid credentials
                     if (errorBody?.contains("Account deactivated", ignoreCase = true) == true) {
                         withContext(Dispatchers.Main) {
                             showReactivateOption(email)
@@ -101,11 +103,7 @@ class LoginFragment : Fragment() {
                     }
 
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Invalid credentials",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(requireContext(), "Invalid credentials", Toast.LENGTH_SHORT).show()
                     }
                 }
 
@@ -120,6 +118,7 @@ class LoginFragment : Fragment() {
             }
         }
     }
+
 
 
     private fun showReactivateOption(email: String) {

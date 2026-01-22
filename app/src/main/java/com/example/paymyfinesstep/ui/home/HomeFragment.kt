@@ -143,6 +143,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
 
 
+    private var hasLoadedIndividual = false
+    private var hasLoadedFamily = false
+
+
+
+
 
 
 
@@ -159,59 +165,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHomeBinding.bind(view)
 
-        binding.fabAddMember.setOnClickListener {
-            AddFamilyMemberDialogFragment {
-                if (!hasLoadedOnce) {
-                    hasLoadedOnce = true
-                    loadFines()
-                } else {
-                    // ✅ Just show what we already have
-                    updateList()
-                }
-
-            }.show(childFragmentManager, "add_family_dialog")
-        }
-
         // ------------------------------------------------------
-        // 1. RESTORE MODE FROM STORAGE
+        // 1) RESTORE MODE FROM STORAGE
         // ------------------------------------------------------
         currentMode = loadSavedMode()
 
-
-
         // ------------------------------------------------------
-        // 2. MENU HOST
-        // ------------------------------------------------------
-        /*val menuHost: MenuHost = requireActivity()
-        menuHost.addMenuProvider(object : MenuProvider {
-
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.menu_top, menu)
-            }
-
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                when (menuItem.itemId) {
-                    R.id.action_apply_reduction -> {
-                        findNavController().navigate(R.id.applyReductionFragment); return true
-                    }
-                    R.id.action_apply_redirection -> {
-                        findNavController().navigate(R.id.applyRedirectionFragment); return true
-                    }
-                    R.id.action_settings -> {
-                        findNavController().navigate(R.id.settingsFragment); return true
-                    }
-                    R.id.action_logout -> {
-                        logoutUser(); return true
-                    }
-                }
-                return false
-            }
-        }, viewLifecycleOwner, Lifecycle.State.RESUMED)*/
-
-
-
-        // ------------------------------------------------------
-        // 3. BASIC UI REFERENCES
+        // 2) BASIC UI REFERENCES
         // ------------------------------------------------------
         imageHomeProfileAvatar = view.findViewById(R.id.imageHomeProfileAvatar)
         textProfileName = view.findViewById(R.id.textProfileName)
@@ -219,114 +179,37 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         textProfileId = view.findViewById(R.id.textProfileId)
 
         textTopFineCount = view.findViewById(R.id.textTopFineCount)
-
         recyclerFines = view.findViewById(R.id.recyclerFines)
         progress = view.findViewById(R.id.progressBar)
-
-       /* btnUnpaid = view.findViewById(R.id.btnUnpaid)
-        btnPaid = view.findViewById(R.id.btnPaid)
-        slidingPill = view.findViewById(R.id.viewSlidingPill)
-        toggleContainer = view.findViewById(R.id.togglePaidState)*/
 
         recyclerFamilyUsers = view.findViewById(R.id.recyclerFamilyUsers)
         editSearch = view.findViewById(R.id.editSearch)
         textUsersFound = view.findViewById(R.id.textUsersFound)
-/*
-        textCartBadge = view.findViewById(R.id.textCartBadge)
-*/
-        profileInfoRow = view.findViewById(R.id.profileInfoRow)
 
+        profileInfoRow = view.findViewById(R.id.profileInfoRow)
 
         val btnSearch = view.findViewById<ImageButton>(R.id.btnSearch)
         val btnFilter = view.findViewById<ImageButton>(R.id.btnFilter)
-        /*val btnCart = view.findViewById<ImageButton>(R.id.btnCart)*/
-
-
-
 
         // ------------------------------------------------------
-        // 4. MODE TOGGLE BUTTONS (replaces dropdown)
+        // 3) SETUP PROFILE
         // ------------------------------------------------------
-        val btnModeIndividual = view.findViewById<ImageButton>(R.id.btnModeIndividual)
-        val btnModeFamily = view.findViewById<ImageButton>(R.id.btnModeFamily)
+        setupProfile()
 
-        fun updateModeIcons(mode: ProfileMode) {
-            if (mode == ProfileMode.INDIVIDUAL) {
-                btnModeIndividual.setColorFilter(resources.getColor(android.R.color.white))
-                btnModeFamily.setColorFilter(resources.getColor(android.R.color.darker_gray))
-            } else {
-                btnModeIndividual.setColorFilter(resources.getColor(android.R.color.darker_gray))
-                btnModeFamily.setColorFilter(resources.getColor(android.R.color.white))
-            }
+        parentFragmentManager.setFragmentResultListener(
+            "profile_image_updated",
+            viewLifecycleOwner
+        ) { _, _ ->
+            refreshProfileAvatar()
         }
 
-        // Apply highlight immediately
-        updateModeIcons(currentMode)
-
-        btnModeIndividual.setOnClickListener {
-            currentMode = ProfileMode.INDIVIDUAL
-            saveMode(currentMode)
-            updateModeIcons(currentMode)
-            updateModeUI()
-            loadFines()
-            updateFabVisibility(currentMode)
-        }
-
-        btnModeFamily.setOnClickListener {
-            currentMode = ProfileMode.FAMILY
-            saveMode(currentMode)
-            updateModeIcons(currentMode)
-            updateModeUI()
-            loadFines()
-            updateFabVisibility(currentMode)
-        }
-
-
+        // ------------------------------------------------------
+        // 4) SETUP INDIVIDUAL FINES RECYCLER
+        // ------------------------------------------------------
+        setupRecycler()
 
         // ------------------------------------------------------
-        // 5. SEARCH
-        // ------------------------------------------------------
-        editSearch.addTextChangedListener {
-            val q = it.toString().trim()
-            if (currentMode == ProfileMode.FAMILY) searchFamilyMembers(q)
-            else searchFines(q)
-        }
-
-        btnSearch.setOnClickListener { showSearchBottomSheet() }
-
-
-
-        // ------------------------------------------------------
-        // 6. FILTERS
-        // ------------------------------------------------------
-        btnFilter.setOnClickListener {
-            val sheet = FilterBottomSheet(activeFilters) { newFilters ->
-                activeFilters = newFilters
-                updateList()
-            }
-            sheet.show(childFragmentManager, "filters")
-            updateFilterBadge()
-        }
-
-
-
-        // ------------------------------------------------------
-        // 7. CART
-        // ------------------------------------------------------
-       /*btnCart.setOnClickListener {
-            findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToCartFragment())
-        }*/
-
-        /*updateCartBadge()*/
-
-        profileInfoRow.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_profileDetailsFragment
-            )
-        }
-
-
-        // ------------------------------------------------------
-        // 8. FAMILY ADAPTER
+        // 5) SETUP FAMILY ADAPTER + RECYCLER
         // ------------------------------------------------------
         familyAdapter = FamilyAdapter(
             items = mutableListOf(),
@@ -343,29 +226,124 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         recyclerFamilyUsers.layoutManager = LinearLayoutManager(requireContext())
         recyclerFamilyUsers.adapter = familyAdapter
 
-
-
-
         // ------------------------------------------------------
-        // 9. LOAD DATA + INIT UI + FAB
+        // 6) FAB MENU SETUP
         // ------------------------------------------------------
-        setupProfile()
-        parentFragmentManager.setFragmentResultListener(
-            "profile_image_updated",
-            viewLifecycleOwner
-        ) { _, _ ->
-            refreshProfileAvatar()
-        }
-
-        setupRecycler()
-        /*setupToggleAnimation()*/
-
         resetFabMenu()
         setupFabMenu()
+
+        binding.fabAddMember.setOnClickListener {
+            AddFamilyMemberDialogFragment {
+                // ✅ After adding a member, reload FAMILY list + fines
+                hasLoadedOnce = false
+                loadFines(forceReload = true)
+            }.show(childFragmentManager, "add_family_dialog")
+        }
+
+        // ------------------------------------------------------
+        // 7) PROFILE DETAILS CLICK
+        // ------------------------------------------------------
+        profileInfoRow.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_profileDetailsFragment)
+        }
+
+        // ------------------------------------------------------
+        // 8) MODE TOGGLE BUTTONS (INDIVIDUAL / FAMILY)
+        // ------------------------------------------------------
+        val btnModeIndividual = view.findViewById<ImageButton>(R.id.btnModeIndividual)
+        val btnModeFamily = view.findViewById<ImageButton>(R.id.btnModeFamily)
+
+        fun updateModeIcons(mode: ProfileMode) {
+            if (mode == ProfileMode.INDIVIDUAL) {
+                btnModeIndividual.setColorFilter(resources.getColor(android.R.color.white))
+                btnModeFamily.setColorFilter(resources.getColor(android.R.color.darker_gray))
+            } else {
+                btnModeIndividual.setColorFilter(resources.getColor(android.R.color.darker_gray))
+                btnModeFamily.setColorFilter(resources.getColor(android.R.color.white))
+            }
+        }
+
+        // ✅ Apply initial mode visuals
+        updateModeIcons(currentMode)
+
+        btnModeIndividual.setOnClickListener {
+            if (currentMode == ProfileMode.INDIVIDUAL) return@setOnClickListener
+
+            currentMode = ProfileMode.INDIVIDUAL
+            saveMode(currentMode)
+            updateModeIcons(currentMode)
+            updateModeUI()
+            updateFabVisibility(currentMode)
+
+            // ✅ Force fresh load when switching modes (safe + consistent)
+            hasLoadedOnce = false
+            loadFines(forceReload = true)
+        }
+
+        btnModeFamily.setOnClickListener {
+            if (currentMode == ProfileMode.FAMILY) return@setOnClickListener
+
+            currentMode = ProfileMode.FAMILY
+            saveMode(currentMode)
+            updateModeIcons(currentMode)
+            updateModeUI()
+            updateFabVisibility(currentMode)
+
+            // ✅ Force fresh load when switching modes (safe + consistent)
+            hasLoadedOnce = false
+            loadFines(forceReload = true)
+        }
+
+        // ------------------------------------------------------
+        // 9) SEARCH
+        // ------------------------------------------------------
+        editSearch.addTextChangedListener {
+            val q = it.toString().trim()
+            searchQuery = q
+
+            if (currentMode == ProfileMode.FAMILY) {
+                searchFamilyMembers(q)
+                updateList() // ✅ filters family fines after member filtering
+            } else {
+                searchFines(q)
+            }
+        }
+
+        btnSearch.setOnClickListener {
+            showSearchBottomSheet()
+        }
+
+        // ------------------------------------------------------
+        // 10) FILTERS
+        // ------------------------------------------------------
+        btnFilter.setOnClickListener {
+            val sheet = FilterBottomSheet(activeFilters) { newFilters ->
+                activeFilters = newFilters
+                updateList()
+            }
+            sheet.show(childFragmentManager, "filters")
+            updateFilterBadge()
+        }
+
+        // ------------------------------------------------------
+        // 11) APPLY INITIAL UI STATE
+        // ------------------------------------------------------
+        updateModeUI()
         updateFabVisibility(currentMode)
 
-        loadFines()
+        // ------------------------------------------------------
+        // 12) RESET STATE + LOAD ONCE (CORRECT PLACE)
+        // ------------------------------------------------------
+        hasLoadedOnce = false
+        isLoading = false
+
+        openFines = emptyList()
+        closedFines = emptyList()
+        allFines = emptyList()
+
+        loadFines(forceReload = true)
     }
+
 
 
 
@@ -531,14 +509,19 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         lifecycleScope.launch {
             try {
                 val resp = withContext(Dispatchers.IO) {
-                    familyApi.deleteFamilyMember(member.id)
+                    // ✅ delete by LINK id (not member profile id)
+                    familyApi.deleteFamilyMember(member.linkId)
                 }
 
                 if (resp.isSuccessful) {
                     Toast.makeText(requireContext(), "Member removed", Toast.LENGTH_SHORT).show()
-                    loadFines() // reload family list + fines
+                    loadFines(forceReload = true) // ✅ better, reload family list + fines
                 } else {
-                    Toast.makeText(requireContext(), "Delete failed (${resp.code()})", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Delete failed (${resp.code()})",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
 
             } catch (e: Exception) {
@@ -546,6 +529,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
     }
+
 
 
 
@@ -826,12 +810,19 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     // -----------------------------------------------------------
     // LOAD FINES (ONLY INDIVIDUAL)
     // -----------------------------------------------------------
+
+
     private fun loadFines(forceReload: Boolean = false) {
 
         if (isLoading) return
 
-        // ✅ If we already loaded before and user is not forcing reload, just update UI
-        if (hasLoadedOnce && !forceReload) {
+        // ✅ Determine current mode's cache flag
+        val alreadyLoaded = when (currentMode) {
+            ProfileMode.INDIVIDUAL -> hasLoadedIndividual
+            ProfileMode.FAMILY -> hasLoadedFamily
+        }
+
+        if (alreadyLoaded && !forceReload) {
             updateList()
             return
         }
@@ -846,9 +837,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                     if (currentMode == ProfileMode.INDIVIDUAL) {
 
-                        // -------------------------------
-                        // OPEN FINES
-                        // -------------------------------
+                        Log.d("HOME", "Loading INDIVIDUAL fines...")
+
                         val openResp = api.getInfringements()
                         val openError = openResp.errorDetails?.firstOrNull()
 
@@ -867,16 +857,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                         openFines = openResp.iForce.orEmpty()
 
-                        // -------------------------------
-                        // CLOSED FINES (IMPORTANT FIX)
-                        // -------------------------------
                         val closedResp = api.getClosedInfringements()
-
                         val hasBackendError = closedResp.errorDetails?.isNotEmpty() == true
                         val tempClosed = closedResp.iForce.orEmpty()
 
-                        // ✅ Only overwrite if response actually returned paid fines
-                        // ✅ OR there was no backend error
                         if (tempClosed.isNotEmpty() || !hasBackendError) {
                             closedFines = tempClosed
                         } else {
@@ -890,9 +874,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                     } else {
 
-                        // -------------------------------
-                        // FAMILY MODE
-                        // -------------------------------
+                        Log.d("HOME", "Loading FAMILY members + fines...")
+
                         val familyList = familyApi.getFamilyMembers()
                         fullFamilyList = familyList
                         familyMembers = familyList
@@ -905,6 +888,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         val collectedFines = mutableListOf<IForceItem>()
 
                         for (member in familyList) {
+                            Log.d("HOME", "Fetching fines for member: ${member.idNumber}")
+
                             val resp = api.getFamilyInfringements(member.idNumber)
 
                             val err = resp.errorDetails?.firstOrNull()
@@ -916,9 +901,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                             if (err != null) continue
 
                             resp.iForce?.forEach { fine ->
-                                collectedFines.add(
-                                    fine.copy(userIdNumber = member.idNumber)
-                                )
+                                collectedFines.add(fine.copy(userIdNumber = member.idNumber))
                             }
                         }
 
@@ -931,11 +914,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
 
                 allFines = fines
-                hasLoadedOnce = true
+
+                // ✅ mark loaded flag per mode
+                when (currentMode) {
+                    ProfileMode.INDIVIDUAL -> hasLoadedIndividual = true
+                    ProfileMode.FAMILY -> hasLoadedFamily = true
+                }
 
                 Log.d(
                     "HOME",
-                    "Loaded. showUnpaid=$showUnpaid open=${openFines.size} closed=${closedFines.size}"
+                    "Loaded mode=$currentMode total=${fines.size} open=${openFines.size} closed=${closedFines.size}"
                 )
 
                 updateList()
@@ -946,13 +934,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     "Error loading fines: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()
-
             } finally {
                 isLoading = false
                 progress.visibility = View.GONE
             }
         }
+
+        Log.d("HOME", "loadFines(forceReload=$forceReload) hasLoadedOnce=$hasLoadedOnce mode=$currentMode")
+
+
     }
+
 
 
 
@@ -1053,10 +1045,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun updateList() {
 
         val baseList: List<IForceItem> =
-            if (showUnpaid) openFines else closedFines
+            if (currentMode == ProfileMode.FAMILY) {
+                allFines // ✅ family fines live here
+            } else {
+                if (showUnpaid) openFines else closedFines
+            }
 
         val afterSearch = baseList.filter { fine ->
-            val q = searchQuery.lowercase()
+            val q = searchQuery.trim().lowercase()
+
+            if (q.isBlank()) return@filter true
 
             fine.chargeDescriptions?.joinToString(" ")?.lowercase()?.contains(q) == true ||
                     fine.offenceLocation?.lowercase()?.contains(q) == true ||
@@ -1114,13 +1112,18 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 "${afterFilters.size} ${if (showUnpaid) "unpaid" else "paid"} fines found"
 
             adapter.update(afterFilters)
+
         } else {
+            // ✅ Family mode: group by selected/visible familyMembers + attach their fines
             familyAdapter.update(
                 familyMembers.toMutableList(),
                 afterFilters
             )
+
+            textUsersFound.text = "${familyMembers.size} Users Found"
         }
     }
+
 
 
 

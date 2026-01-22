@@ -1,6 +1,5 @@
 package com.example.paymyfinesstep.ui.family
 
-import android.app.AlertDialog
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -8,13 +7,17 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog   // ✅ IMPORTANT
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.paymyfinesstep.R
-import com.example.paymyfinesstep.api.*
+import com.example.paymyfinesstep.api.ApiBackend
+import com.example.paymyfinesstep.api.FamilyApi
+import com.example.paymyfinesstep.api.FamilyMember
+import com.example.paymyfinesstep.api.IForceItem
 import com.example.paymyfinesstep.databinding.FragmentFamilyBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,6 +29,7 @@ class FamilyFragment : Fragment(R.layout.fragment_family) {
     private val binding get() = _binding!!
 
     private lateinit var adapter: FamilyAdapter
+
     private val familyApi: FamilyApi by lazy {
         ApiBackend.create(requireContext(), FamilyApi::class.java)
     }
@@ -42,11 +46,6 @@ class FamilyFragment : Fragment(R.layout.fragment_family) {
         loadFamilyMembers()
     }
 
-
-
-    // ---------------------------------------------------------
-    // Setup RecyclerView + Adapter
-    // ---------------------------------------------------------
     private fun setupRecycler() {
         binding.recyclerFamily.layoutManager = LinearLayoutManager(requireContext())
     }
@@ -55,17 +54,14 @@ class FamilyFragment : Fragment(R.layout.fragment_family) {
         adapter = FamilyAdapter(
             items = mutableListOf(),
             allFines = allFines,
-            onFineClick = { /* navigate to fine details */ },
-            onMemberClick = { /* open member profile */ },
+            onFineClick = { /* TODO navigate */ },
+            onMemberClick = { /* TODO open member */ },
             onDelete = { member -> confirmDelete(member) },
-            onEdit = { /* open edit screen */ }
+            onEdit = { /* TODO edit */ }
         )
         binding.recyclerFamily.adapter = adapter
     }
 
-    // ---------------------------------------------------------
-    // Load Members
-    // ---------------------------------------------------------
     private fun loadFamilyMembers() {
         lifecycleScope.launch {
             try {
@@ -75,53 +71,35 @@ class FamilyFragment : Fragment(R.layout.fragment_family) {
                 adapter.update(members.toMutableList(), allFines)
 
             } catch (ex: Exception) {
-                Toast.makeText(requireContext(), "Failed to load members", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Failed to load members: ${ex.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
-
-    // ---------------------------------------------------------
-    // Delete Flow
-    // ---------------------------------------------------------
-    private fun showDeleteMemberDialog() {
-        val members = adapter.getItems()
-
-        if (members.isEmpty()) {
-            Toast.makeText(requireContext(), "No family members available", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val names = members.map { "${it.fullName} ${it.surname}" }.toTypedArray()
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("Select Member to Delete")
-            .setItems(names) { _, index ->
-                confirmDelete(members[index])
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
 
     private fun confirmDelete(member: FamilyMember) {
         AlertDialog.Builder(requireContext())
             .setTitle("Remove Family Member")
             .setMessage("Remove ${member.fullName}?")
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Delete") { _, _ -> executeDelete(member) }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+                // If swipe triggered it, restore item position
+                loadFamilyMembers()
+            }
+            .setPositiveButton("Delete") { _, _ ->
+                executeDelete(member)
+            }
             .show()
     }
 
     private fun executeDelete(member: FamilyMember) {
-        Log.d("DELETE_TEST", "Firing delete request for: ${member.fullName}")
+        Log.d("DELETE_TEST", "Deleting linkId: ${member.linkId}")
 
         lifecycleScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
-                    familyApi.deleteFamilyMember(member.id)
+                    // ✅ IMPORTANT: DELETE by linkId
+                    familyApi.deleteFamilyMember(member.linkId)
                 }
-
-                Log.d("DELETE_TEST", "Response code: ${response.code()}")
 
                 if (response.isSuccessful) {
                     adapter.removeMember(member)
@@ -132,17 +110,16 @@ class FamilyFragment : Fragment(R.layout.fragment_family) {
                         "Delete failed (${response.code()})",
                         Toast.LENGTH_LONG
                     ).show()
+                    loadFamilyMembers()
                 }
 
             } catch (ex: Exception) {
                 Toast.makeText(requireContext(), "Error: ${ex.message}", Toast.LENGTH_LONG).show()
+                loadFamilyMembers()
             }
         }
     }
 
-    // ---------------------------------------------------------
-    // Swipe-to-Delete
-    // ---------------------------------------------------------
     private fun enableSwipeToDelete() {
         val callback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
 
@@ -186,7 +163,6 @@ class FamilyFragment : Fragment(R.layout.fragment_family) {
         ItemTouchHelper(callback).attachToRecyclerView(binding.recyclerFamily)
     }
 
-    // ---------------------------------------------------------
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()

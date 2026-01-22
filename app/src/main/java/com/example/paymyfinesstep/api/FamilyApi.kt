@@ -12,9 +12,13 @@ data class FamilyAddRequest(
     val fullName: String,
     val surname: String,
     val idNumber: String,
-    val email: String,
-    val cell: String
+    val relationship: String,   // REQUIRED
+    val nickname: String?,       // optional
+    val email: String?,
+    val cell: String?
 )
+
+
 
 data class FamilyAddResponse(
     val message: String?,
@@ -22,17 +26,21 @@ data class FamilyAddResponse(
 )
 
 data class FamilyMember(
-    val id: String,
-    val userId: String,
+    val linkId: String,       // NEW (delete uses linkId now)
+    val profileId: String,    // NEW
     val fullName: String,
     val surname: String,
     val idNumber: String,
     val email: String?,
     val cell: String?,
     val createdAt: String,
-    val finesCount: Int = 0,
-    val hasAccount: Boolean
+    val hasAccount: Boolean,
+    val relationship: String,
+    val nickname: String? = null,
+    val finesCount: Int = 0
 )
+
+
 
 
 
@@ -44,7 +52,8 @@ interface FamilyApi {
     @GET("family/list")
     suspend fun getFamilyMembers(): List<FamilyMember>
 
-    @DELETE("family/{id}")
-    suspend fun deleteFamilyMember(@Path("id") id: String): Response<Unit>
-
+    // DELETE now uses linkId (not profile/member id)
+    @DELETE("family/{linkId}")
+    suspend fun deleteFamilyMember(@Path("linkId") linkId: String): Response<Unit>
 }
+

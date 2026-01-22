@@ -6,12 +6,15 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.example.paymyfinesstep.R
-import com.example.paymyfinesstep.api.*
+import com.example.paymyfinesstep.api.ApiBackend
+import com.example.paymyfinesstep.api.FamilyAddRequest
+import com.example.paymyfinesstep.api.FamilyApi
 import com.example.paymyfinesstep.databinding.DialogAddFamilyMemberBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,6 +31,11 @@ class AddFamilyMemberDialogFragment(
         ApiBackend.create(requireContext(), FamilyApi::class.java)
     }
 
+    private val relationships = listOf(
+        "Parent", "Child", "Spouse", "Sibling",
+        "Grandparent", "Relative", "Friend", "Other"
+    )
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
         _binding = DialogAddFamilyMemberBinding.inflate(LayoutInflater.from(context))
@@ -38,6 +46,13 @@ class AddFamilyMemberDialogFragment(
             .create()
 
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        // ✅ Bind relationship dropdown
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, relationships)
+        binding.dropdownRelationship.setAdapter(adapter)
+
+        // Default value (optional)
+        binding.dropdownRelationship.setText("Other", false)
 
         binding.btnAddFamilyMember.setOnClickListener {
             submitMember()
@@ -50,17 +65,35 @@ class AddFamilyMemberDialogFragment(
         val fullName = binding.editFullName.text.toString().trim()
         val surname = binding.editSurname.text.toString().trim()
         val idNumber = binding.editIdNumber.text.toString().trim()
-        val email = binding.editEmail.text.toString().trim()
-        val cell = binding.editCell.text.toString().trim()
 
+        val relationship = binding.dropdownRelationship.text.toString().trim()
+        val nickname = binding.editNickname.text.toString().trim().ifEmpty { null }
+
+        val email = binding.editEmail.text.toString().trim().ifEmpty { null }
+        val cell = binding.editCell.text.toString().trim().ifEmpty { null }
+
+        // ✅ Required validation
         if (fullName.isEmpty() || surname.isEmpty() || idNumber.isEmpty()) {
-            Toast.makeText(requireContext(), "Please fill in all required fields", Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), "Please fill in Full name, Surname and ID number", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        if (relationship.isEmpty() || !relationships.contains(relationship)) {
+            Toast.makeText(requireContext(), "Please select a valid relationship", Toast.LENGTH_LONG).show()
             return
         }
 
         lifecycleScope.launch {
             try {
-                val request = FamilyAddRequest(fullName, surname, idNumber, email, cell)
+                val request = FamilyAddRequest(
+                    fullName = fullName,
+                    surname = surname,
+                    idNumber = idNumber,
+                    relationship = relationship,
+                    nickname = nickname,
+                    email = email,
+                    cell = cell
+                )
 
                 val response = withContext(Dispatchers.IO) {
                     familyApi.addFamily(request)
@@ -70,7 +103,7 @@ class AddFamilyMemberDialogFragment(
                     Toast.makeText(requireContext(), response.error, Toast.LENGTH_LONG).show()
                 } else {
                     Toast.makeText(requireContext(), response.message ?: "Member added", Toast.LENGTH_SHORT).show()
-                    onMemberAdded?.invoke()     // Tell HomeFragment to refresh list
+                    onMemberAdded?.invoke()
                     dismiss()
                 }
 

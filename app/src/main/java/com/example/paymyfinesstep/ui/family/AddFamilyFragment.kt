@@ -9,20 +9,19 @@ import androidx.navigation.fragment.findNavController
 import com.example.paymyfinesstep.R
 import com.example.paymyfinesstep.api.ApiBackend
 import com.example.paymyfinesstep.api.FamilyAddRequest
-
 import com.example.paymyfinesstep.api.FamilyApi
-
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
 class AddFamilyFragment : Fragment(R.layout.dialog_add_family_member) {
 
-    private val api by lazy { ApiBackend.create(requireContext(),FamilyApi::class.java) }
+    private val api by lazy { ApiBackend.create(requireContext(), FamilyApi::class.java) }
 
-    private val prefs by lazy {
-        requireContext().getSharedPreferences("paymyfines_prefs", 0)
-    }
+    private val relationships = listOf(
+        "Parent", "Child", "Spouse", "Sibling",
+        "Grandparent", "Relative", "Friend", "Other"
+    )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -32,15 +31,24 @@ class AddFamilyFragment : Fragment(R.layout.dialog_add_family_member) {
         val idNumber = view.findViewById<TextInputEditText>(R.id.editIdNumber)
         val email = view.findViewById<TextInputEditText>(R.id.editEmail)
         val cell = view.findViewById<TextInputEditText>(R.id.editCell)
+
+        // ✅ If you added nickname and relationship in layout:
+        val nicknameInput = view.findViewById<TextInputEditText?>(R.id.editNickname)
+
         val btnAdd = view.findViewById<MaterialButton>(R.id.btnAddFamilyMember)
 
         btnAdd.setOnClickListener {
+
             val req = FamilyAddRequest(
-                fullName = fullName.text.toString().trim(),
-                surname = surname.text.toString().trim(),
-                idNumber = idNumber.text.toString().trim(),
-                email = email.text.toString().trim(),
-                cell = cell.text.toString().trim()
+                fullName = fullName.text?.toString()?.trim() ?: "",
+                surname = surname.text?.toString()?.trim() ?: "",
+                idNumber = idNumber.text?.toString()?.trim() ?: "",
+
+                relationship = "Other", // ✅ replace with dropdown value later
+                nickname = nicknameInput?.text?.toString()?.trim()?.ifEmpty { null },
+
+                email = email.text?.toString()?.trim()?.ifEmpty { null },
+                cell = cell.text?.toString()?.trim()?.ifEmpty { null }
             )
 
             validateAndSubmit(req)
@@ -48,16 +56,8 @@ class AddFamilyFragment : Fragment(R.layout.dialog_add_family_member) {
     }
 
     private fun validateAndSubmit(req: FamilyAddRequest) {
-        if (req.fullName.isEmpty() || req.surname.isEmpty() ||
-            req.idNumber.isEmpty() || req.email.isEmpty() || req.cell.isEmpty()
-        ) {
-            Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val jwt = prefs.getString("jwt_token", null)
-        if (jwt.isNullOrEmpty()) {
-            Toast.makeText(requireContext(), "Session expired", Toast.LENGTH_SHORT).show()
+        if (req.fullName.isEmpty() || req.surname.isEmpty() || req.idNumber.isEmpty()) {
+            Toast.makeText(requireContext(), "Please fill Full name, Surname and ID number", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -65,8 +65,8 @@ class AddFamilyFragment : Fragment(R.layout.dialog_add_family_member) {
             try {
                 val response = api.addFamily(req)
 
-
-                Toast.makeText(requireContext(),
+                Toast.makeText(
+                    requireContext(),
                     response.message ?: "Family member added successfully!",
                     Toast.LENGTH_LONG
                 ).show()
@@ -74,7 +74,8 @@ class AddFamilyFragment : Fragment(R.layout.dialog_add_family_member) {
                 findNavController().navigateUp()
 
             } catch (e: Exception) {
-                Toast.makeText(requireContext(),
+                Toast.makeText(
+                    requireContext(),
                     "Error: ${e.message}",
                     Toast.LENGTH_LONG
                 ).show()

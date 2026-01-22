@@ -1,6 +1,5 @@
 package com.example.paymyfinesstep.ui.family
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,8 +21,7 @@ class FamilyAdapter(
     private val onEdit: (FamilyMember) -> Unit
 ) : RecyclerView.Adapter<FamilyAdapter.FamilyVH>() {
 
-
-    private var expandedUserId: String? = null
+    private var expandedLinkId: String? = null
 
     inner class FamilyVH(view: View) : RecyclerView.ViewHolder(view) {
         val userHeader: View = view.findViewById(R.id.userHeader)
@@ -35,10 +33,6 @@ class FamilyAdapter(
         val expandContainer: View = view.findViewById(R.id.expandContainer)
         val noFinesText: TextView = view.findViewById(R.id.textNoFines)
         val recyclerFines: RecyclerView = view.findViewById(R.id.recyclerUserFines)
-
-        /*val deleteBtn: ImageView = view.findViewById(R.id.btnDeleteFamilyMember)
-        val editBtn: ImageView = view.findViewById(R.id.iconEditMember)*/
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FamilyVH {
@@ -50,14 +44,22 @@ class FamilyAdapter(
     override fun onBindViewHolder(holder: FamilyVH, position: Int) {
         val member = items[position]
 
-        holder.name.text = "${member.fullName} ${member.surname}"
-        holder.idNumber.text = "ID: ${member.idNumber}"
+        val displayName = if (!member.nickname.isNullOrBlank()) {
+            member.nickname
+        } else {
+            "${member.fullName} ${member.surname}"
+        }
+
+        holder.name.text = displayName
+        holder.idNumber.text = "ID: ${member.idNumber} • ${member.relationship}"
         holder.badge.visibility = if (member.hasAccount) View.VISIBLE else View.GONE
 
-        val isExpanded = expandedUserId == member.id
+        val isExpanded = expandedLinkId == member.linkId
         setExpansionState(holder, isExpanded)
 
-        val fines = allFines.filter { it.userIdNumber == member.idNumber }
+        val fines = allFines.filter { fine ->
+            fine.userIdNumber == member.idNumber
+        }
 
         if (isExpanded) {
             if (fines.isEmpty()) {
@@ -65,37 +67,29 @@ class FamilyAdapter(
                 holder.recyclerFines.visibility = View.GONE
             } else {
                 holder.noFinesText.visibility = View.GONE
-                holder.recyclerFines.apply {
-                    visibility = View.VISIBLE
-                    layoutManager = LinearLayoutManager(context)
-                    adapter = FinesAdapter(fines, onFineClick)
-                }
+                holder.recyclerFines.visibility = View.VISIBLE
+
+                holder.recyclerFines.layoutManager = LinearLayoutManager(holder.itemView.context)
+                holder.recyclerFines.adapter = FinesAdapter(fines, onFineClick)
             }
         }
 
         holder.userHeader.setOnClickListener {
-            expandedUserId = if (isExpanded) null else member.id
+            expandedLinkId = if (isExpanded) null else member.linkId
             notifyDataSetChanged()
         }
 
-
-
-        /*holder.deleteBtn.setOnClickListener { onDelete(member) }
-        holder.editBtn.setOnClickListener { onEdit(member) }*/
-
-        holder.itemView.setOnClickListener { onMemberClick(member) }
-
-        /*holder.deleteBtn.setOnClickListener {
-            Log.d("DELETE_TEST", "Delete button clicked for ${member.fullName}")
-            onDelete(member)
-        }*/
-
+        holder.itemView.setOnClickListener {
+            onMemberClick(member)
+        }
     }
-    fun getItem(position: Int): FamilyMember = items[position]
-    fun getItems(): List<FamilyMember> = items
-
 
     override fun getItemCount(): Int = items.size
+
+    fun getItem(position: Int): FamilyMember = items[position]
+
+    // ✅ FIX: this is required because your FamilyFragment calls adapter.getItems()
+    fun getItems(): List<FamilyMember> = items
 
     fun update(newMembers: MutableList<FamilyMember>, newFines: List<IForceItem> = emptyList()) {
         items = newMembers
@@ -104,10 +98,12 @@ class FamilyAdapter(
     }
 
     fun removeMember(member: FamilyMember) {
-        val index = items.indexOf(member)
+        val index = items.indexOfFirst { it.linkId == member.linkId }
         if (index >= 0) {
             items.removeAt(index)
             notifyItemRemoved(index)
+        } else {
+            notifyDataSetChanged()
         }
     }
 

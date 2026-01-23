@@ -13,8 +13,11 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.example.paymyfinesstep.R
 import com.example.paymyfinesstep.api.ApiBackend
+import com.example.paymyfinesstep.api.FamilyAddMemberResponse
 import com.example.paymyfinesstep.api.FamilyAddRequest
 import com.example.paymyfinesstep.api.FamilyApi
+import com.example.paymyfinesstep.api.FamilyProfileDto
+import com.example.paymyfinesstep.api.UpdateFamilyProfileRequest
 import com.example.paymyfinesstep.databinding.DialogAddFamilyMemberBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,12 +77,17 @@ class AddFamilyMemberDialogFragment(
 
         // ✅ Required validation
         if (fullName.isEmpty() || surname.isEmpty() || idNumber.isEmpty()) {
-            Toast.makeText(requireContext(), "Please fill in Full name, Surname and ID number", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                "Please fill in Full name, Surname and ID number",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
         if (relationship.isEmpty() || !relationships.contains(relationship)) {
-            Toast.makeText(requireContext(), "Please select a valid relationship", Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), "Please select a valid relationship", Toast.LENGTH_LONG)
+                .show()
             return
         }
 
@@ -96,15 +104,37 @@ class AddFamilyMemberDialogFragment(
                 )
 
                 val response = withContext(Dispatchers.IO) {
-                    familyApi.addFamily(request)
+                    familyApi.addFamily(request) // ✅ now returns FamilyAddMemberResponse
                 }
 
-                if (response.error != null) {
-                    Toast.makeText(requireContext(), response.error, Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(requireContext(), response.message ?: "Member added", Toast.LENGTH_SHORT).show()
-                    onMemberAdded?.invoke()
-                    dismiss()
+                when (response.status) {
+
+                    "LINKED", "RESTORED" -> {
+                        Toast.makeText(requireContext(), response.message, Toast.LENGTH_SHORT).show()
+                        onMemberAdded?.invoke()
+                        dismiss()
+                    }
+
+                    "ALREADY_LINKED" -> {
+                        Toast.makeText(requireContext(), response.message, Toast.LENGTH_SHORT).show()
+                        dismiss()
+                    }
+
+                    "CONFIRM_UPDATE" -> {
+                        showConfirmUpdateDialog(response)
+                    }
+
+                    "ERROR" -> {
+                        Toast.makeText(requireContext(), response.message, Toast.LENGTH_LONG).show()
+                    }
+
+                    else -> {
+                        Toast.makeText(
+                            requireContext(),
+                            response.message.ifEmpty { "Unexpected response" },
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
 
             } catch (e: Exception) {
@@ -112,6 +142,62 @@ class AddFamilyMemberDialogFragment(
             }
         }
     }
+
+
+    private fun showConfirmUpdateDialog(resp: FamilyAddMemberResponse) {
+        val existing = resp.existing ?: return
+        val attempted = resp.attempted ?: return
+
+        val msg = """
+Saved member:
+${existing.fullName} ${existing.surname}
+Email: ${existing.email ?: "-"}
+Cell: ${existing.cell ?: "-"}
+
+You entered:
+${attempted.fullName} ${attempted.surname}
+Email: ${attempted.email ?: "-"}
+Cell: ${attempted.cell ?: "-"}
+
+Do you want to update the saved member details?
+""".trimIndent()
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Member already exists")
+            .setMessage(msg)
+            .setNegativeButton("Keep saved details", null)
+            .setPositiveButton("Update details") { _, _ ->
+                updateProfile(attempted)
+            }
+            .show()
+    }
+
+    private fun updateProfile(attempted: FamilyProfileDto) {
+        lifecycleScope.launch {
+            try {
+                val req = UpdateFamilyProfileRequest(
+                    idNumber = attempted.idNumber,
+                    fullName = attempted.fullName,
+                    surname = attempted.surname,
+                    email = attempted.email,
+                    cell = attempted.cell
+                )
+
+                val resp = withContext(Dispatchers.IO) {
+                    familyApi.updateProfile(req)
+                }
+
+                Toast.makeText(requireContext(), resp.message ?: "Updated", Toast.LENGTH_SHORT).show()
+                onMemberAdded?.invoke()
+                dismiss()
+
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Update failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+
 
     override fun onStart() {
         super.onStart()

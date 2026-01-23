@@ -12,8 +12,8 @@ object ApiBackend {
     // After changing IP address go to res/xml/network_security_config.xml and add the IP:
 
     private const val BASE_URL_EMULATOR = "http://10.0.2.2:5089/"           // Emulator
-    /*private const val BASE_URL_PHONE = "http://10.249.129.32:5089/" */        // Your PC work WiFi IP and port
-    private const val BASE_URL_PHONE = "http://192.168.0.194:5089/"     // Your PC home WiFi IP and port
+    private const val BASE_URL_PHONE = "http://10.249.129.20:5089/"         // Your PC work WiFi IP and port
+   /* private const val BASE_URL_PHONE = "http://192.168.0.194:5089/"*/     // Your PC home WiFi IP and port
 
     fun baseUrl(): String {
         return if (android.os.Build.FINGERPRINT.contains("generic")) {

@@ -7,7 +7,7 @@
         <domain includeSubdomains="true">10.0.2.2</domain>
 
         <!-- Your PC IP on work WiFi -->
-        <domain includeSubdomains="true">10.249.129.32</domain>
+        <domain includeSubdomains="true">10.249.129.20</domain>
 
         <!-- Your PC IP on home WiFi -->
         <domain includeSubdomains="true">192.168.0.194</domain>

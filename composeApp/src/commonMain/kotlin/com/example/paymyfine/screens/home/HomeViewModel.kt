@@ -29,14 +29,14 @@ class HomeViewModel(
     fun switchMode(mode: HomeMode) {
         settings.putString(KEY_HOME_MODE, mode.name)
         _uiState.value = _uiState.value.copy(mode = mode)
-        if (mode == HomeMode.INDIVIDUAL) loadIndividual(true)
     }
 
-    fun loadIndividual(force: Boolean) {
+
+    fun loadIndividual(idNumber: String, force: Boolean) {
         scope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            repo.loadIndividual(force)
+            repo.loadIndividual(idNumber, force)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
                         fines = it,
@@ -52,4 +52,9 @@ class HomeViewModel(
                 }
         }
     }
+
+    fun clear() {
+        scope.cancel()
+    }
+
 }

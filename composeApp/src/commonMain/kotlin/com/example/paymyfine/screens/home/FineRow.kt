@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.paymyfine.data.fines.IForceItem
+import kotlin.math.round
 
 @Composable
 fun FineRow(
@@ -36,16 +37,14 @@ fun FineRow(
 
             Spacer(Modifier.height(6.dp))
 
-            val amount = (fine.amountDueInCents ?: 0) / 100.0
-
-            val amountText = (amount * 100).toInt() / 100.0
+            val cents = fine.amountDueInCents ?: 0
+            val amount = round((cents / 100.0) * 100) / 100
 
             Text(
-                text = "R $amountText",
+                text = "R $amount",
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary
             )
-
         }
     }
 }

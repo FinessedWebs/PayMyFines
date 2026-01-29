@@ -28,11 +28,23 @@ class HomeScreenRoute : Screen {
 
         val state by vm.uiState
 
-        LaunchedEffect(state.mode) {
-            if (state.mode == HomeMode.INDIVIDUAL && state.fines.isEmpty()) {
-                vm.loadIndividual(force = true)
+        val idNumber = remember {
+            settings.getString("user_id_number", "")
+        }
+
+        LaunchedEffect(state.mode, idNumber) {
+            if (
+                state.mode == HomeMode.INDIVIDUAL &&
+                state.fines.isEmpty() &&
+                idNumber.isNotBlank()
+            ) {
+                vm.loadIndividual(
+                    idNumber = idNumber,
+                    force = true
+                )
             }
         }
+
 
         HomeScreen(
             state = state,

@@ -10,11 +10,13 @@ class InfringementService(
     private val baseUrl: String
 ) {
 
-    suspend fun getOpen(): InfringementResponse =
-        client.get("$baseUrl/infringements") {
+    // ✅ OPEN fines (by ID number)
+    suspend fun getOpen(idNumber: String): InfringementResponse =
+        client.get("$baseUrl/infringements/$idNumber") {
             accept(ContentType.Application.Json)
         }.body()
 
+    // ✅ CLOSED fines (no ID in URL)
     suspend fun getClosed(): InfringementResponse =
         client.get("$baseUrl/infringements/closed") {
             accept(ContentType.Application.Json)

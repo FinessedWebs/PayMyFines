@@ -9,19 +9,16 @@ class InfringementRepository(
     private var cachedOpen: List<IForceItem> = emptyList()
     private var cachedClosed: List<IForceItem> = emptyList()
 
-    suspend fun loadIndividual(force: Boolean): Result<List<IForceItem>> {
+    suspend fun loadIndividual(
+        idNumber: String,
+        force: Boolean
+    ): Result<List<IForceItem>> {
         return try {
-            if (cachedOpen.isNotEmpty() && !force) {
+            if (!force && cachedOpen.isNotEmpty()) {
                 return Result.success(cachedOpen + cachedClosed)
             }
 
-            val openResp = service.getOpen()
-            val err = openResp.errorDetails?.firstOrNull()
-
-            if (err != null) {
-                return Result.failure(Exception(err.message ?: "Failed to load fines"))
-            }
-
+            val openResp = service.getOpen(idNumber)
             val closedResp = service.getClosed()
 
             cachedOpen = openResp.iForce.orEmpty()

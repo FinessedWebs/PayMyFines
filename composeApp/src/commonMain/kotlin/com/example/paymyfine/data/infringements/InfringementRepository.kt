@@ -6,33 +6,32 @@ class InfringementRepository(
     private val service: InfringementService
 ) {
 
-    private var cachedOpen: List<IForceItem> = emptyList()
-    private var cachedClosed: List<IForceItem> = emptyList()
+    private var cached: List<IForceItem> = emptyList()
 
     suspend fun loadIndividual(
         idNumber: String,
         force: Boolean
     ): Result<List<IForceItem>> {
         return try {
-            if (!force && cachedOpen.isNotEmpty()) {
-                return Result.success(cachedOpen + cachedClosed)
+            if (cached.isNotEmpty() && !force) {
+                return Result.success(cached)
             }
 
-            val openResp = service.getOpen(idNumber)
-            val closedResp = service.getClosed()
+            val open = service.getOpen(idNumber)
+            val closed = service.getClosed(idNumber)
 
-            cachedOpen = openResp.iForce.orEmpty()
-            cachedClosed = closedResp.iForce.orEmpty()
+            val err = open.errorDetails?.firstOrNull()
+            if (err != null) {
+                return Result.failure(
+                    Exception(err.message ?: "Failed to load fines")
+                )
+            }
 
-            Result.success(cachedOpen + cachedClosed)
+            cached = open.iForce.orEmpty() + closed.iForce.orEmpty()
+            Result.success(cached)
 
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-
-    fun clearCache() {
-        cachedOpen = emptyList()
-        cachedClosed = emptyList()
     }
 }

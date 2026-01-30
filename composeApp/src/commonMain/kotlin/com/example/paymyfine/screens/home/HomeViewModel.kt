@@ -26,11 +26,12 @@ class HomeViewModel(
             settings.getString(KEY_HOME_MODE, HomeMode.INDIVIDUAL.name)
         )
 
+    /** ✅ REQUIRED by HomeScreen */
     fun switchMode(mode: HomeMode) {
         settings.putString(KEY_HOME_MODE, mode.name)
         _uiState.value = _uiState.value.copy(mode = mode)
+        // ❌ DO NOT load fines here
     }
-
 
     fun loadIndividual(idNumber: String, force: Boolean) {
         scope.launch {
@@ -56,5 +57,4 @@ class HomeViewModel(
     fun clear() {
         scope.cancel()
     }
-
 }

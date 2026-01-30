@@ -62,12 +62,12 @@ fun HomeScreen(
         )
 
         // ───────────── GLOBAL LOADING ─────────────
-        if (state.isLoading) {
+        /*if (state.isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
                 color = MaterialTheme.colorScheme.onPrimary
             )
-        }
+        }*/
     }
 }
 

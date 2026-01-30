@@ -1,5 +1,8 @@
 package com.example.paymyfine.data.fines
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class IForceItem(
     val noticeNumber: String?,
     val offenceDate: String?,

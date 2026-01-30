@@ -62,7 +62,8 @@ kotlin {
                 implementation("com.russhwolf:multiplatform-settings-no-arg:1.2.0")
 
 
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
             }
         }
 
@@ -78,9 +79,10 @@ kotlin {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation(libs.kotlinx.coroutinesSwing)
-                implementation("io.ktor:ktor-client-cio:2.3.12")
+                implementation("io.ktor:ktor-client-okhttp:2.3.12")
             }
         }
+
 
         // ✅ iOS shared sourceSet (must be created manually)
         val iosMain by creating {

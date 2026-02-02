@@ -1,9 +1,13 @@
 package com.example.paymyfine
 
+
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import cafe.adriel.voyager.navigator.Navigator
 import com.example.paymyfine.data.auth.AuthRepository
 import com.example.paymyfine.data.auth.AuthService
+import com.example.paymyfine.data.infringements.InfringementRepository
+import com.example.paymyfine.data.infringements.InfringementService
 import com.example.paymyfine.data.network.BaseUrlProvider
 import com.example.paymyfine.data.network.HttpClientFactory
 import com.example.paymyfine.data.session.SessionStore
@@ -17,26 +21,30 @@ import com.russhwolf.settings.Settings
 fun App() {
     PayMyFineTheme {
 
-        val settings = Settings()
-        val sessionStore = SessionStore(settings)
+        val settings = remember { Settings() }
+        val sessionStore = remember { SessionStore(settings) }
 
-        val baseUrl = BaseUrlProvider.get()
-        val client = HttpClientFactory.create()
+        val baseUrl = remember { BaseUrlProvider.get() }
+        val client = remember { HttpClientFactory.create(sessionStore) }
 
-        val authRepo = AuthRepository(
-            AuthService(client, baseUrl),
-            sessionStore
-        )
-
-        val loginVm = LoginViewModel(authRepo)
-        val signupVm = SignupViewModel(authRepo)
-
-        // 🔥 THIS IS CRITICAL
-        Navigator(
-            screen = LoginScreen(
-                loginVm = loginVm,
-                signupVm = signupVm
+        val authRepo = remember {
+            AuthRepository(
+                AuthService(client, baseUrl),
+                sessionStore
             )
+        }
+
+        val infringementRepo = remember {
+            InfringementRepository(
+                InfringementService(client, baseUrl)
+            )
+        }
+
+        val loginVm = remember { LoginViewModel(authRepo) }
+        val signupVm = remember { SignupViewModel(authRepo) }
+
+        Navigator(
+            screen = LoginScreen(loginVm, signupVm)
         )
     }
 }

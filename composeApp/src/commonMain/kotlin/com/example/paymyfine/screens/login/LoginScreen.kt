@@ -120,9 +120,10 @@ class LoginScreen(
 
                 Button(
                     onClick = {
-                        loginVm.login(scope) {
+                        loginVm.login {
                             navigator?.replace(HomeScreenRoute())
                         }
+
                     },
                     enabled = !state.isLoading,
                     modifier = Modifier

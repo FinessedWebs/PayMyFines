@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import com.example.paymyfine.data.auth.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 data class LoginUiState(
@@ -18,6 +19,7 @@ data class LoginUiState(
 
 class LoginViewModel(
     private val repo: AuthRepository
+
 ) {
 
     var state by mutableStateOf(
@@ -33,29 +35,33 @@ class LoginViewModel(
         state = state.copy(password = v, errorMessage = null)
     }
 
-    fun login(scope: CoroutineScope, onSuccess: () -> Unit) {
-        state = state.copy(isLoading = true, errorMessage = null)
+    private val scope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+
+    fun login(onSuccess: () -> Unit) {
+
+        state = state.copy(isLoading = true)
 
         scope.launch {
             val result = repo.login(state.email, state.password)
 
             state = if (result.isSuccess) {
+                state = state.copy(isLoading = false)
                 onSuccess()
+
                 state.copy(isLoading = false)
             } else {
-                val msg = result.exceptionOrNull()?.message
                 state.copy(
                     isLoading = false,
-                    errorMessage = if (msg == "account_deactivated") {
-                        state.copy(showReactivate = true)
-                        "Account deactivated"
-                    } else {
-                        msg ?: "Invalid credentials"
-                    }
+                    errorMessage =
+                        result.exceptionOrNull()?.message
+                            ?: "Invalid credentials"
                 )
             }
         }
     }
+
 
     fun reactivate(scope: CoroutineScope) {
         scope.launch {

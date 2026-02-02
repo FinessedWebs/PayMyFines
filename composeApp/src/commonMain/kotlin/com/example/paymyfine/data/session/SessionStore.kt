@@ -5,6 +5,7 @@ import com.russhwolf.settings.Settings
 class SessionStore(
     private val settings: Settings
 ) {
+
     companion object {
         private const val KEY_TOKEN = "jwt_token"
         private const val KEY_FULLNAME = "fullName"
@@ -19,20 +20,24 @@ class SessionStore(
         email: String?,
         idNumber: String?
     ) {
-        if (!token.isNullOrBlank()) settings.putString(KEY_TOKEN, token)
-        if (!fullName.isNullOrBlank()) settings.putString(KEY_FULLNAME, fullName)
-        if (!email.isNullOrBlank()) settings.putString(KEY_EMAIL, email)
-        if (!idNumber.isNullOrBlank()) settings.putString(KEY_IDNUMBER, idNumber)
+        token?.let { settings.putString(KEY_TOKEN, it) }
+        fullName?.let { settings.putString(KEY_FULLNAME, it) }
+        email?.let { settings.putString(KEY_EMAIL, it) }
+        idNumber?.let { settings.putString(KEY_IDNUMBER, it) }
 
-        // Default to INDIVIDUAL after login
         settings.putString(KEY_PROFILE_MODE, "INDIVIDUAL")
     }
 
     fun getToken(): String? =
         settings.getStringOrNull(KEY_TOKEN)
 
+    fun isLoggedIn(): Boolean =
+        !getToken().isNullOrBlank()
+
     fun getIdNumber(): String? =
         settings.getStringOrNull(KEY_IDNUMBER)
+
+    fun logout() = clear()
 
     fun clear() {
         settings.remove(KEY_TOKEN)
@@ -41,4 +46,10 @@ class SessionStore(
         settings.remove(KEY_IDNUMBER)
         settings.remove(KEY_PROFILE_MODE)
     }
+
+    fun requireToken(): String =
+        getToken() ?: error("User not logged in")
+
+
 }
+

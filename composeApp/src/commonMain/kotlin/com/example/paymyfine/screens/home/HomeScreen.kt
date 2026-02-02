@@ -2,6 +2,7 @@ package com.example.paymyfine.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
@@ -11,6 +12,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.paymyfine.data.family.models.FamilyMemberDto
+import androidx.compose.foundation.lazy.items
+import com.example.paymyfine.data.family.models.AddFamilyMemberRequest
+
 
 @Composable
 fun HomeScreen(
@@ -19,17 +24,19 @@ fun HomeScreen(
     onSearchClick: () -> Unit,
     onFilterClick: () -> Unit,
     onAddMemberClick: () -> Unit,
-    onDeleteMemberClick: () -> Unit
-) {
+    onDeleteMemberClick: () -> Unit,
+    onDismissDialog: () -> Unit,
+    onSubmitFamily: (AddFamilyMemberRequest) -> Unit
+
+)
+ {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.primary)
     ) {
-
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // ───────────── TOP BAR ─────────────
             HomeTopBar(
                 mode = state.mode,
                 hasActiveFilters = state.hasActiveFilters,
@@ -38,7 +45,6 @@ fun HomeScreen(
                 onFilterClick = onFilterClick
             )
 
-            // ───────────── MAIN CONTENT ─────────────
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 shape = MaterialTheme.shapes.extraLarge,
@@ -46,12 +52,12 @@ fun HomeScreen(
             ) {
                 when (state.mode) {
                     HomeMode.INDIVIDUAL -> IndividualHomeContent(state)
-                    HomeMode.FAMILY -> FamilyHomeContent()
+                    HomeMode.FAMILY -> FamilyHomeContent(state.familyMembers)
+
                 }
             }
         }
 
-        // ───────────── FLOATING ACTION BUTTONS ─────────────
         HomeFabMenu(
             mode = state.mode,
             onAddClick = onAddMemberClick,
@@ -61,13 +67,23 @@ fun HomeScreen(
                 .padding(16.dp)
         )
 
-        // ───────────── GLOBAL LOADING ─────────────
-        /*if (state.isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-                color = MaterialTheme.colorScheme.onPrimary
+        if (state.showAddDialog) {
+            AddFamilyDialog(
+                onDismiss = onDismissDialog,
+                onSubmit = onSubmitFamily
             )
-        }*/
+        }
+
+        // ✅ ADD IT HERE (LAST ITEM IN BOX)
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
     }
 }
 
@@ -84,6 +100,7 @@ private fun HomeFabMenu(
         modifier = modifier,
         horizontalAlignment = Alignment.End
     ) {
+
         FloatingActionButton(onClick = onAddClick) {
             Text("+")
         }
@@ -100,7 +117,9 @@ private fun HomeFabMenu(
     }
 }
 
-/* ───────────────── TOP BAR ───────────────── */
+
+
+/* ───────────────── TOP BAR (WITH MODE BUTTONS) ───────────────── */
 
 @Composable
 private fun HomeTopBar(
@@ -110,34 +129,73 @@ private fun HomeTopBar(
     onSearchClick: () -> Unit,
     onFilterClick: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(12.dp)
     ) {
 
-        Text(
-            text = if (mode == HomeMode.INDIVIDUAL) "My Fines" else "Family Fines",
-            color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.titleMedium
-        )
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = if (mode == HomeMode.INDIVIDUAL) "My Fines" else "Family Fines",
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.titleMedium
+            )
 
-        Row {
-            IconButton(onClick = onSearchClick) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
+            Row {
+                IconButton(onClick = onSearchClick) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+                IconButton(onClick = onFilterClick) {
+                    Icon(
+                        Icons.Default.FilterList,
+                        contentDescription = "Filter",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
-            IconButton(onClick = onFilterClick) {
-                Icon(
-                    imageVector = Icons.Default.FilterList,
-                    contentDescription = "Filter",
-                    tint = MaterialTheme.colorScheme.onPrimary
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // ✅ MODE BUTTONS
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Button(
+                onClick = { onModeChange(HomeMode.INDIVIDUAL) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor =
+                        if (mode == HomeMode.INDIVIDUAL)
+                            MaterialTheme.colorScheme.secondary
+                        else Color.LightGray
                 )
+            ) {
+                Text("Individual")
+            }
+
+            Spacer(Modifier.width(8.dp))
+
+            Button(
+                onClick = { onModeChange(HomeMode.FAMILY) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor =
+                        if (mode == HomeMode.FAMILY)
+                            MaterialTheme.colorScheme.secondary
+                        else Color.LightGray
+                )
+            ) {
+                Text("Family")
             }
         }
     }
@@ -149,10 +207,7 @@ private fun HomeTopBar(
 private fun IndividualHomeContent(state: HomeState) {
     when {
         state.isLoading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(Modifier.fillMaxSize(), Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
@@ -166,21 +221,15 @@ private fun IndividualHomeContent(state: HomeState) {
         }
 
         state.fines.isEmpty() -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No fines found",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+            Box(Modifier.fillMaxSize(), Alignment.Center) {
+                Text("No fines found")
             }
         }
 
         else -> {
             IndividualFinesList(
                 fines = state.fines,
-                onFineClick = { /* TODO */ }
+                onFineClick = {}
             )
         }
     }
@@ -189,11 +238,41 @@ private fun IndividualHomeContent(state: HomeState) {
 /* ───────────────── FAMILY MODE ───────────────── */
 
 @Composable
-private fun FamilyHomeContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Family Mode (coming soon)")
+private fun FamilyHomeContent(
+    members: List<FamilyMemberDto>
+) {
+    if (members.isEmpty()) {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+            Text("No family members yet")
+        }
+        return
+    }
+
+    LazyColumn {
+        items(
+            items = members,
+            key = { it.linkId } // ✅ STABLE KEY
+        ) { m ->
+
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = m.nickname ?: "${m.fullName} ${m.surname}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                Text(
+                    text = "${m.relationship} • ${m.idNumber}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            Divider()
+        }
     }
 }
+
+

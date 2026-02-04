@@ -94,8 +94,10 @@ class HomeScreenRoute : Screen {
                     onAddMemberClick = vm::showAddDialog,
                     onDeleteMemberClick = {},
                     onDismissDialog = vm::hideAddDialog,
-                    onSubmitFamily = vm::addFamily
+                    onSubmitFamily = vm::addFamily,
+                    onFineClick = vm::selectFine // ✅ IMPORTANT
                 )
+
             }
 
             BottomNavBar(navigator)

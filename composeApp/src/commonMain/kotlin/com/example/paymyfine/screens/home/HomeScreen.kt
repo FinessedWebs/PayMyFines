@@ -3,19 +3,21 @@ package com.example.paymyfine.screens.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.paymyfine.data.family.models.FamilyMemberDto
-import androidx.compose.foundation.lazy.items
-import com.example.paymyfine.data.family.models.AddFamilyMemberRequest
-
+import androidx.compose.foundation.layout.BoxWithConstraints
+import com.example.paymyfine.data.family.models.*
+import com.example.paymyfine.data.fines.IForceItem
+import org.jetbrains.compose.resources.painterResource
+import paymyfine.composeapp.generated.resources.*
 
 @Composable
 fun HomeScreen(
@@ -26,38 +28,61 @@ fun HomeScreen(
     onAddMemberClick: () -> Unit,
     onDeleteMemberClick: () -> Unit,
     onDismissDialog: () -> Unit,
-    onSubmitFamily: (AddFamilyMemberRequest) -> Unit
+    onSubmitFamily: (AddFamilyMemberRequest) -> Unit,
+    onFineClick: (IForceItem) -> Unit
+) {
 
-)
- {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary)
+    var selectedFine by remember { mutableStateOf<IForceItem?>(null) }
+
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
 
-            HomeTopBar(
-                mode = state.mode,
-                hasActiveFilters = state.hasActiveFilters,
-                onModeChange = onModeChange,
-                onSearchClick = onSearchClick,
-                onFilterClick = onFilterClick
+        val isDesktop = maxWidth > 700.dp
+
+        if (isDesktop) {
+
+            // ---------- DESKTOP ----------
+            DesktopLayout(
+                state = state,
+                selectedFine = selectedFine,
+                onFineClick = {
+                    selectedFine = it
+                    onFineClick(it)
+                }
             )
 
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                shape = MaterialTheme.shapes.extraLarge,
-                color = Color.White
-            ) {
-                when (state.mode) {
-                    HomeMode.INDIVIDUAL -> IndividualHomeContent(state)
-                    HomeMode.FAMILY -> FamilyHomeContent(state.familyMembers)
+        } else {
 
+            // ---------- MOBILE ----------
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.primary)
+            ) {
+
+                HomeTopBar(
+                    mode = state.mode,
+                    hasActiveFilters = state.hasActiveFilters,
+                    onModeChange = onModeChange,
+                    onSearchClick = onSearchClick,
+                    onFilterClick = onFilterClick
+                )
+
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = Color.White
+                ) {
+                    IndividualHomeContent(
+                        state = state,
+                        onFineClick = onFineClick
+                    )
                 }
             }
         }
 
+        // ---------- GLOBAL FAB ----------
         HomeFabMenu(
             mode = state.mode,
             onAddClick = onAddMemberClick,
@@ -67,6 +92,7 @@ fun HomeScreen(
                 .padding(16.dp)
         )
 
+        // ---------- ADD DIALOG ----------
         if (state.showAddDialog) {
             AddFamilyDialog(
                 onDismiss = onDismissDialog,
@@ -74,18 +100,18 @@ fun HomeScreen(
             )
         }
 
-        // ✅ ADD IT HERE (LAST ITEM IN BOX)
+        // ---------- LOADER ----------
         if (state.isLoading) {
             Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                Modifier.fillMaxSize(),
+                Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
         }
-
     }
 }
+
 
 /* ───────────────── FAB MENU ───────────────── */
 
@@ -204,36 +230,27 @@ private fun HomeTopBar(
 /* ───────────────── INDIVIDUAL MODE ───────────────── */
 
 @Composable
-private fun IndividualHomeContent(state: HomeState) {
+private fun IndividualHomeContent(
+    state: HomeState,
+    onFineClick: (IForceItem) -> Unit
+) {
     when {
-        state.isLoading -> {
+        state.errorMessage != null ->
+            Text(state.errorMessage)
+
+        state.fines.isEmpty() ->
             Box(Modifier.fillMaxSize(), Alignment.Center) {
-                CircularProgressIndicator()
+                Text("No fines")
             }
-        }
 
-        state.errorMessage != null -> {
-            Text(
-                text = state.errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-
-        state.fines.isEmpty() -> {
-            Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Text("No fines found")
-            }
-        }
-
-        else -> {
+        else ->
             IndividualFinesList(
                 fines = state.fines,
-                onFineClick = {}
+                onFineClick = onFineClick
             )
-        }
     }
 }
+
 
 /* ───────────────── FAMILY MODE ───────────────── */
 
@@ -274,5 +291,115 @@ private fun FamilyHomeContent(
         }
     }
 }
+
+@Composable
+fun DesktopLayout(
+    state: HomeState,
+    selectedFine: IForceItem?,
+    onFineClick: (IForceItem) -> Unit
+) {
+    Row(Modifier.fillMaxSize()) {
+
+        // NAV 10%
+        NavigationRail(
+            modifier = Modifier.fillMaxHeight().weight(0.1f)
+        ) {
+            NavigationRailItem(
+                selected = true,
+                onClick = {},
+                icon = { Icon(painterResource(Res.drawable.ic_home), null) }
+            )
+            NavigationRailItem(
+                selected = false,
+                onClick = {},
+                icon = { Icon(painterResource(Res.drawable.ic_info), null) }
+            )
+            NavigationRailItem(
+                selected = false,
+                onClick = {},
+                icon = { Icon(painterResource(Res.drawable.ic_notifications), null) }
+            )
+        }
+
+        // LIST 40%
+        Box(
+            Modifier.fillMaxHeight().weight(0.4f)
+        ) {
+            IndividualFinesList(
+                fines = state.fines,
+                onFineClick = onFineClick
+            )
+        }
+
+        // DETAILS 50%
+        Box(
+            Modifier.fillMaxHeight().weight(0.5f)
+        ) {
+            FineDetailsPane(selectedFine)
+        }
+    }
+}
+
+
+@Composable
+fun MobileLayout(
+    state: HomeState,
+    onFineClick: (IForceItem) -> Unit
+) {
+    IndividualFinesList(
+        fines = state.fines,
+        onFineClick = onFineClick
+    )
+}
+
+@Composable
+fun FineDetailsPane(fine: IForceItem?) {
+
+    if (fine == null) {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+            Text("Select a fine")
+        }
+        return
+    }
+
+    Column(
+        Modifier.fillMaxSize().padding(16.dp)
+    ) {
+        Text("Notice: ${fine.noticeNumber}")
+        Text("Location: ${fine.offenceLocation}")
+        Text("Date: ${fine.offenceDate}")
+        Text("Amount: R${(fine.amountDueInCents ?: 0)/100.0}")
+        Spacer(Modifier.height(12.dp))
+        Text("Status: ${fine.status}")
+        Text("Authority: ${fine.issuingAuthority}")
+    }
+}
+
+
+@Composable
+fun BottomNavBarVertical() {
+
+    NavigationRail {
+
+        NavigationRailItem(
+            selected = true,
+            onClick = {},
+            icon = { Icon(painterResource(Res.drawable.ic_home), null) }
+        )
+
+        NavigationRailItem(
+            selected = false,
+            onClick = {},
+            icon = { Icon(painterResource(Res.drawable.ic_info), null) }
+        )
+
+        NavigationRailItem(
+            selected = false,
+            onClick = {},
+            icon = { Icon(painterResource(Res.drawable.ic_notifications), null) }
+        )
+    }
+}
+
 
 

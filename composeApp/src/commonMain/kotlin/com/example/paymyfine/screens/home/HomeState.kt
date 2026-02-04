@@ -16,5 +16,7 @@ data class HomeState(
     val errorMessage: String? = null,
     val isSearchVisible: Boolean = false,
     val hasActiveFilters: Boolean = false,
-    val showAddDialog: Boolean = false
+    val showAddDialog: Boolean = false,
+    val selectedFine: IForceItem? = null
+
 )

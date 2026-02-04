@@ -3,6 +3,7 @@ package com.example.paymyfine.screens.home
 import androidx.compose.runtime.*
 import com.example.paymyfine.data.family.FamilyRepository
 import com.example.paymyfine.data.family.models.AddFamilyMemberRequest
+import com.example.paymyfine.data.fines.IForceItem
 import com.example.paymyfine.data.infringements.InfringementRepository
 import com.example.paymyfine.data.network.ApiResult
 import com.russhwolf.settings.Settings
@@ -151,6 +152,13 @@ class HomeViewModel(
     fun hideAddDialog() {
         _uiState.value = _uiState.value.copy(showAddDialog = false)
     }
+
+    fun selectFine(fine: IForceItem) {
+        _uiState.value = _uiState.value.copy(
+            selectedFine = fine
+        )
+    }
+
 
 
     fun clear() {

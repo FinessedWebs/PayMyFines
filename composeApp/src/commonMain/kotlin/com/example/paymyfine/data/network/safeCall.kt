@@ -1,16 +1,25 @@
 package com.example.paymyfine.data.network
 
-import io.ktor.client.call.*
-import io.ktor.client.statement.*
+import com.example.paymyfine.data.session.SessionStore
+import io.ktor.client.call.body
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.utils.io.errors.IOException
 
-
 suspend inline fun <reified T> safeCall(
-    block: suspend () -> HttpResponse
+    sessionStore: SessionStore,
+    crossinline block: suspend () -> HttpResponse
 ): ApiResult<T> {
+
     return try {
 
         val response = block()
+
+        // ✅ AUTO LOGOUT
+        if (response.status.value == 401) {
+            sessionStore.clear()
+            return ApiResult.Unauthorized
+        }
 
         if (response.status.value in 200..299) {
             ApiResult.Success(response.body())
@@ -22,9 +31,12 @@ suspend inline fun <reified T> safeCall(
         }
 
     } catch (e: IOException) {
-        ApiResult.NetworkError("Network error. Check connection.")
+        ApiResult.NetworkError(
+            "Network error. Check connection."
+        )
     } catch (e: Exception) {
-        ApiResult.UnknownError(e.message ?: "Unknown error")
+        ApiResult.UnknownError(
+            e.message ?: "Unknown error"
+        )
     }
 }
-

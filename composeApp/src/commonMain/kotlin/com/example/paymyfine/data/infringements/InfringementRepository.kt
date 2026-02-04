@@ -1,42 +1,35 @@
 package com.example.paymyfine.data.infringements
 
 import com.example.paymyfine.data.fines.IForceItem
-import kotlin.time.Clock
-
 import com.example.paymyfine.data.network.*
+import com.example.paymyfine.data.session.SessionStore
 
 class InfringementRepository(
-    private val service: InfringementService
+    private val service: InfringementService,
+    private val sessionStore: SessionStore
 ) {
 
     private var cached: List<IForceItem> = emptyList()
-    private var lastFetchTime = 0L
-
-    private val cacheDurationMs = 2 * 60 * 1000 // 2 minutes
 
     suspend fun loadOpenFines(
-        force: Boolean = false
+        force: Boolean
     ): ApiResult<List<IForceItem>> {
 
-        val now = Clock.System.now().toEpochMilliseconds()
-
-
-        if (!force &&
-            cached.isNotEmpty() &&
-            now - lastFetchTime < cacheDurationMs
-        ) {
+        if (!force && cached.isNotEmpty()) {
             return ApiResult.Success(cached)
         }
 
-        return when (
-            val result = safeCall<InfringementResponse> {
+        val result =
+            safeCall<InfringementResponse>(sessionStore) {
                 service.getOpen()
             }
-        ) {
+
+        return when (result) {
 
             is ApiResult.Success -> {
 
-                val err = result.data.errorDetails?.firstOrNull()
+                val err =
+                    result.data.errorDetails?.firstOrNull()
 
                 if (err != null) {
                     ApiResult.ApiError(
@@ -44,11 +37,10 @@ class InfringementRepository(
                         err.message ?: "Failed to load fines"
                     )
                 } else {
-                    val fines = result.data.iForce.orEmpty()
+                    val fines =
+                        result.data.iForce.orEmpty()
 
                     cached = fines
-                    lastFetchTime = now
-
                     ApiResult.Success(fines)
                 }
             }
@@ -56,11 +48,7 @@ class InfringementRepository(
             is ApiResult.ApiError -> result
             is ApiResult.NetworkError -> result
             is ApiResult.UnknownError -> result
+            ApiResult.Unauthorized -> ApiResult.Unauthorized
         }
-    }
-
-    fun clearCache() {
-        cached = emptyList()
-        lastFetchTime = 0
     }
 }

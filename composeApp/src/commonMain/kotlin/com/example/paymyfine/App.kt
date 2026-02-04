@@ -34,11 +34,13 @@ fun App() {
             )
         }
 
-        val infringementRepo = remember {
+        /*val infringementRepo = remember {
             InfringementRepository(
-                InfringementService(client, baseUrl)
+                InfringementService(client, baseUrl),
+                sessionStore
             )
-        }
+
+        }*/
 
         val loginVm = remember { LoginViewModel(authRepo) }
         val signupVm = remember { SignupViewModel(authRepo) }

@@ -45,10 +45,47 @@ class InfringementRepository(
                 }
             }
 
-            is ApiResult.ApiError -> result
-            is ApiResult.NetworkError -> result
-            is ApiResult.UnknownError -> result
-            ApiResult.Unauthorized -> ApiResult.Unauthorized
+            is ApiResult.ApiError ->
+                ApiResult.ApiError(result.code, result.message)
+
+            is ApiResult.NetworkError ->
+                ApiResult.NetworkError(result.message)
+
+            is ApiResult.UnknownError ->
+                ApiResult.UnknownError(result.message)
+
+            ApiResult.Unauthorized ->
+                ApiResult.Unauthorized
+        }
+    }
+
+    suspend fun loadFinesForMember(
+        idNumber: String
+    ): ApiResult<List<IForceItem>> {
+
+        val res =
+            safeCall<InfringementResponse>(sessionStore) {
+                service.getForFamily(idNumber) // ✅ FIXED
+            }
+
+        return when (res) {
+
+            is ApiResult.Success -> {
+                val fines = res.data.iForce.orEmpty()
+                ApiResult.Success(fines)
+            }
+
+            is ApiResult.ApiError ->
+                ApiResult.ApiError(res.code, res.message)
+
+            is ApiResult.NetworkError ->
+                ApiResult.NetworkError(res.message)
+
+            is ApiResult.UnknownError ->
+                ApiResult.UnknownError(res.message)
+
+            ApiResult.Unauthorized ->
+                ApiResult.Unauthorized
         }
     }
 }

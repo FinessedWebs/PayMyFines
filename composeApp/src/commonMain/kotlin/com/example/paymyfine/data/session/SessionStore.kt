@@ -50,6 +50,21 @@ class SessionStore(
     fun requireToken(): String =
         getToken() ?: error("User not logged in")
 
+    fun getFullName(): String? =
+        settings.getStringOrNull("fullName")
+
+    fun getEmail(): String? =
+        settings.getStringOrNull("email")
+
+    fun saveFullName(name: String) {
+        settings.putString("fullName", name)
+    }
+
+    fun saveEmail(email: String) {
+        settings.putString("email", email)
+    }
+
+
 
 }
 

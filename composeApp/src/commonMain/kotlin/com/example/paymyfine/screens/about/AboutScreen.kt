@@ -3,31 +3,28 @@ package com.example.paymyfine.screens.about
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import com.example.paymyfine.ui.BottomNavBar
+import com.example.paymyfine.ui.DesktopShell
+import com.example.paymyfine.ui.ResponsiveScreenShell
 
 class AboutScreen : Screen {
 
     @Composable
     override fun Content() {
 
-        val navigator = LocalNavigator.current!!
+        ResponsiveScreenShell {
 
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-
-            // ✅ Screen Content
             Box(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
                 Text("About Screen")
             }
-
-            // ✅ Bottom Bar
-            BottomNavBar(navigator)
         }
     }
 }

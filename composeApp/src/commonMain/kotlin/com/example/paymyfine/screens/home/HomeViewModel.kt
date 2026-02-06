@@ -15,6 +15,13 @@ class HomeViewModel(
     private val familyRepo: FamilyRepository
 ) {
 
+    private val _familyFines =
+        mutableStateMapOf<String, List<IForceItem>>()
+
+    val familyFines: Map<String, List<IForceItem>>
+        get() = _familyFines
+
+
     companion object {
         private const val KEY_HOME_MODE = "home_mode"
     }
@@ -33,11 +40,17 @@ class HomeViewModel(
 
     fun switchMode(mode: HomeMode) {
         settings.putString(KEY_HOME_MODE, mode.name)
+
         _uiState.value = _uiState.value.copy(
             mode = mode,
             errorMessage = null
         )
+
+        if (mode == HomeMode.FAMILY) {
+            loadFamily(true)
+        }
     }
+
 
     // ---------- FINES ----------
 
@@ -135,6 +148,26 @@ class HomeViewModel(
             }
         }
     }
+
+    fun loadFinesForMember(idNumber: String) {
+
+        if (_familyFines.containsKey(idNumber)) return
+
+        scope.launch {
+
+            when (val res =
+                repo.loadFinesForMember(idNumber)
+            ) {
+
+                is ApiResult.Success -> {
+                    _familyFines[idNumber] = res.data
+                }
+
+                else -> {}
+            }
+        }
+    }
+
 
     // ---------- HELPERS ----------
 

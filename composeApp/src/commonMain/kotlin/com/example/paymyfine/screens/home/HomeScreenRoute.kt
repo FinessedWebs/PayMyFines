@@ -1,26 +1,21 @@
 package com.example.paymyfine.screens.home
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.core.screen.Screen
+import com.example.paymyfine.data.family.*
 import com.example.paymyfine.data.infringements.*
 import com.example.paymyfine.data.network.*
 import com.example.paymyfine.data.session.SessionStore
-import com.example.paymyfine.data.family.*
+import com.example.paymyfine.ui.ResponsiveScreenShell
 import com.russhwolf.settings.Settings
-import cafe.adriel.voyager.navigator.LocalNavigator
-import com.example.paymyfine.ui.BottomNavBar
-
 
 class HomeScreenRoute : Screen {
 
     @Composable
     override fun Content() {
 
+        // ---------- SETTINGS / SESSION ----------
         val settings = remember { Settings() }
         val sessionStore = remember { SessionStore(settings) }
 
@@ -30,7 +25,7 @@ class HomeScreenRoute : Screen {
 
         val baseUrl = BaseUrlProvider.get()
 
-        // ---------- Infringements ----------
+        // ---------- INFRINGEMENTS ----------
         val infringementService = remember {
             InfringementService(client, baseUrl)
         }
@@ -42,7 +37,7 @@ class HomeScreenRoute : Screen {
             )
         }
 
-        // ---------- Family ----------
+        // ---------- FAMILY ----------
         val familyService = remember {
             FamilyService(client, baseUrl)
         }
@@ -54,6 +49,7 @@ class HomeScreenRoute : Screen {
             )
         }
 
+        // ---------- VIEWMODEL ----------
         val vm = remember {
             HomeViewModel(settings, repo, familyRepo)
         }
@@ -61,6 +57,7 @@ class HomeScreenRoute : Screen {
         val state by vm.uiState
         val idNumber = sessionStore.getIdNumber()
 
+        // ---------- LOAD DATA ----------
         LaunchedEffect(state.mode, idNumber) {
 
             if (state.mode == HomeMode.INDIVIDUAL) {
@@ -77,32 +74,24 @@ class HomeScreenRoute : Screen {
             }
         }
 
-        val navigator = LocalNavigator.current!!
+        // ---------- RESPONSIVE LAYOUT ----------
+        ResponsiveScreenShell {
 
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-
-            Box(
-                modifier = Modifier.weight(1f)
-            ) {
-                HomeScreen(
-                    state = state,
-                    onModeChange = vm::switchMode,
-                    onSearchClick = {},
-                    onFilterClick = {},
-                    onAddMemberClick = vm::showAddDialog,
-                    onDeleteMemberClick = {},
-                    onDismissDialog = vm::hideAddDialog,
-                    onSubmitFamily = vm::addFamily,
-                    onFineClick = vm::selectFine // ✅ IMPORTANT
-                )
-
-            }
-
-            BottomNavBar(navigator)
+            HomeScreen(
+                state = state,
+                onModeChange = vm::switchMode,
+                onSearchClick = {},
+                onFilterClick = {},
+                onAddMemberClick = vm::showAddDialog,
+                onDeleteMemberClick = {},
+                onDismissDialog = vm::hideAddDialog,
+                onSubmitFamily = vm::addFamily,
+                sessionStore = sessionStore,
+                members = state.familyMembers,
+                familyFines = vm.familyFines,
+                onExpand = vm::loadFinesForMember,
+                onFineClick = vm::selectFine
+            )
         }
-
-
     }
 }

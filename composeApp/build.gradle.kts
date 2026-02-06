@@ -52,18 +52,23 @@ kotlin {
 
                 implementation("cafe.adriel.voyager:voyager-navigator:1.1.0-beta03")
 
-                implementation("io.ktor:ktor-client-core:2.3.12")
-                implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
-
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-
-                implementation("com.russhwolf:multiplatform-settings:1.2.0")
-                implementation("com.russhwolf:multiplatform-settings-no-arg:1.2.0")
+                implementation("io.ktor:ktor-client-core:3.4.0")
+                implementation("io.ktor:ktor-client-content-negotiation:3.4.0")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.0")
 
 
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
+
+                implementation("com.russhwolf:multiplatform-settings:1.3.0")
+                implementation("com.russhwolf:multiplatform-settings-no-arg:1.3.0")
+
+
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
                 implementation(libs.kotlinx.datetime)
+
+                implementation("org.jetbrains.compose.ui:ui-graphics:1.10.0")
+                implementation(compose.ui)
+
 
 
 
@@ -74,7 +79,9 @@ kotlin {
             dependencies {
                 implementation(libs.compose.uiToolingPreview)
                 implementation(libs.androidx.activity.compose)
-                implementation("io.ktor:ktor-client-okhttp:2.3.12")
+                implementation("io.ktor:ktor-client-okhttp:3.4.0")
+                implementation("io.coil-kt:coil-compose:2.5.0")
+
             }
         }
 
@@ -82,7 +89,9 @@ kotlin {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation(libs.kotlinx.coroutinesSwing)
-                implementation("io.ktor:ktor-client-okhttp:2.3.12")
+                implementation("io.ktor:ktor-client-okhttp:3.4.0")
+
+
             }
         }
 
@@ -91,7 +100,7 @@ kotlin {
         val iosMain by creating {
             dependsOn(commonMain)
             dependencies {
-                implementation("io.ktor:ktor-client-darwin:2.3.12")
+                implementation("io.ktor:ktor-client-darwin:3.4.0")
             }
         }
 

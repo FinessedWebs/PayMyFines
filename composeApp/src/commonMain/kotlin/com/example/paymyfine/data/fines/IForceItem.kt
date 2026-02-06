@@ -4,14 +4,25 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class IForceItem(
-    val noticeNumber: String?,
-    val offenceDate: String?,
-    val offenceLocation: String?,
-    val chargeDescriptions: List<String>?,
-    val amountDueInCents: Int?,
-    val issuingAuthority: String?,
-    val status: String?,
-    val paymentAllowed: Boolean?,
-    val images: List<String>?,
-    val userIdNumber: String? = null
+    val requestId: String? = null,
+    val dataSource: Int? = null,
+    val issuingAuthority: String? = null,
+    val noticeNumber: String? = null,
+    val offenceDate: String? = null,
+    val offenceLocation: String? = null,
+    val offenceDemeritPoints: Int? = null,
+    val vehicleLicenseNumber: String? = null,
+    val infringerIdNumber: String? = null,
+    val infringerDemeritPointBalance: Int? = null,
+    val chargeDescriptions: List<String>? = null,
+    val amountDueInCents: Int? = null,
+    val paymentAllowed: Boolean? = null,
+    val paymentNotAllowedReason: String? = null,
+    val status: String? = null,
+    val images: List<String>? = null,
+    val caseNumber: String? = null,
+    val courtDate: String? = null,
+    val contemptAmountPaid: Double? = null,
+    val summonsNumber: String? = null
 )
+

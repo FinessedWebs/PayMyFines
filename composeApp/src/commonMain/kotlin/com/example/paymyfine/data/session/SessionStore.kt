@@ -1,9 +1,10 @@
 package com.example.paymyfine.data.session
 
+import com.example.paymyfine.data.cart.CartProvider
 import com.russhwolf.settings.Settings
 
 class SessionStore(
-    private val settings: Settings
+    val settings: Settings
 ) {
 
     companion object {
@@ -40,11 +41,16 @@ class SessionStore(
     fun logout() = clear()
 
     fun clear() {
+
+        // ⭐ CLEAR SESSION
         settings.remove(KEY_TOKEN)
         settings.remove(KEY_FULLNAME)
         settings.remove(KEY_EMAIL)
         settings.remove(KEY_IDNUMBER)
         settings.remove(KEY_PROFILE_MODE)
+
+        // ⭐ CLEAR CART PROVIDER
+        CartProvider.clear()
     }
 
     fun requireToken(): String =
@@ -63,8 +69,4 @@ class SessionStore(
     fun saveEmail(email: String) {
         settings.putString("email", email)
     }
-
-
-
 }
-

@@ -12,20 +12,33 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+
+import com.example.paymyfine.screens.login.LoginScreen
+import com.example.paymyfine.screens.login.LoginViewModel
+import com.example.paymyfine.screens.signup.SignupViewModel
 import com.example.paymyfine.ui.ResponsiveScreenShell
+
+import com.russhwolf.settings.Settings
+import com.example.paymyfine.data.session.SessionStore
+import com.example.paymyfine.data.network.HttpClientFactory
+import com.example.paymyfine.data.auth.AuthRepository
+import com.example.paymyfine.data.auth.AuthService
+import com.example.paymyfine.data.network.BaseUrlProvider
 
 class ProfileScreen : Screen {
 
     @Composable
     override fun Content() {
 
-        var name by remember { mutableStateOf("Hope") }
-        var email by remember { mutableStateOf("hope@gmail.com") }
+        val navigator = LocalNavigator.current
+
+        var showLogoutDialog by remember { mutableStateOf(false) }
 
         ResponsiveScreenShell {
 
             Column(
-                Modifier
+                modifier = Modifier
                     .fillMaxSize()
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -37,9 +50,7 @@ class ProfileScreen : Screen {
                         .size(120.dp)
                         .clip(CircleShape)
                         .background(Color.LightGray)
-                        .clickable {
-                            // TODO: image picker later
-                        },
+                        .clickable { /* future image picker */ },
                     contentAlignment = Alignment.Center
                 ) {
                     Text("Edit")
@@ -47,26 +58,81 @@ class ProfileScreen : Screen {
 
                 Spacer(Modifier.height(24.dp))
 
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Full Name") }
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email") }
-                )
-
-                Spacer(Modifier.height(24.dp))
-
-                Button(onClick = { /* TODO Save */ }) {
+                Button(onClick = { /* Save profile later */ }) {
                     Text("Save Changes")
                 }
+
+                Spacer(Modifier.height(40.dp))
+
+                // ⭐ LOGOUT BUTTON (opens dialog)
+                Button(
+                    onClick = { showLogoutDialog = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Logout")
+                }
             }
+        }
+
+        // ⭐ LOGOUT CONFIRMATION DIALOG
+        if (showLogoutDialog) {
+
+            AlertDialog(
+                onDismissRequest = { showLogoutDialog = false },
+
+                title = { Text("Logout") },
+
+                text = {
+                    Text("Are you sure you want to logout?")
+                },
+
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+
+                            showLogoutDialog = false
+
+                            // ✅ rebuild dependency chain
+                            val settings = Settings()
+                            val sessionStore = SessionStore(settings)
+
+// clear saved token/session
+                            sessionStore.clear()
+
+// client
+                            val client = HttpClientFactory.create(sessionStore)
+
+// ⭐ create service (THIS WAS MISSING)
+                            val baseUrl = BaseUrlProvider.get()
+                            val authService = AuthService(client, baseUrl)
+
+// ⭐ repo uses service
+                            val authRepo = AuthRepository(authService, sessionStore)
+
+// VMs use repo
+                            val loginVm = LoginViewModel(authRepo)
+                            val signupVm = SignupViewModel(authRepo)
+
+                            navigator?.replaceAll(
+                                LoginScreen(loginVm, signupVm)
+                            )
+
+                        }
+                    ) {
+                        Text("Logout")
+                    }
+                },
+
+                dismissButton = {
+                    TextButton(
+                        onClick = { showLogoutDialog = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }

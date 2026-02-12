@@ -60,8 +60,8 @@ class HomeViewModel(
     ) {
         scope.launch {
 
-            // ✅ Only show loader if NOT silent
-            if (!silent) {
+            // ⭐ Show spinner if no fines yet
+            if (!silent || _uiState.value.fines.isEmpty()) {
                 _uiState.value =
                     _uiState.value.copy(isLoading = true)
             }
@@ -96,6 +96,11 @@ class HomeViewModel(
 
         }
     }
+
+    fun refreshFines() {
+        loadOpenFines(force = true, silent = false)
+    }
+
 
 
     // ---------- FAMILY ----------

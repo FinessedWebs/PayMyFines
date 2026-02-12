@@ -3,6 +3,8 @@ package com.example.paymyfine.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -93,86 +95,57 @@ fun ProfileBar(
     fullName: String,
     email: String,
     idNumber: String,
-    fines: List<IForceItem>,
-    onProfileClick: () -> Unit,
-    onFineClick: (IForceItem) -> Unit
+    fineCount: Int,
+    onProfileClick: () -> Unit
 ) {
 
-    Column {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+            .clickable { onProfileClick() },
+        shape = RoundedCornerShape(18.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFFE082)
+        )
+    ) {
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-                .clickable { onProfileClick() },
-            shape = RoundedCornerShape(18.dp),
-            elevation = CardDefaults.cardElevation(4.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFFFE082)
-            )
-        ) {
+        Column {
 
-            Column {
+            Row(
+                Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 
-                // ===== YELLOW PROFILE PART =====
-                Row(
-                    Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                SmartAvatar(idNumber)
 
-                    SmartAvatar(idNumber)
+                Spacer(Modifier.width(12.dp))
 
-                    Spacer(Modifier.width(12.dp))
-
-                    Column {
-                        Text(
-                            fullName.ifBlank { "You" },
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1565C0)
-                        )
-
-                        Text(email, fontSize = 13.sp, color = Color.Gray)
-
-                        Text(
-                            "ID: $idNumber",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-                    }
-                }
-
-                // ===== WHITE SUMMARY CARD =====
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(
-                        bottomStart = 18.dp,
-                        bottomEnd = 18.dp
-                    ),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                Column {
+                    Text(
+                        fullName.ifBlank { "You" },
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1565C0)
                     )
-                ) {
 
-                    Column(Modifier.padding(16.dp)) {
-
-                        Text(
-                            "${fines.size} unpaid fines found",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-
-                        Spacer(Modifier.height(12.dp))
-
-                        // ⭐ FINES INSIDE PROFILE BAR
-                        fines.take(5).forEach { fine ->
-                            FineRow(
-                                fine = fine,
-                                onClick = { onFineClick(fine) }
-                            )
-                        }
-                    }
+                    Text(email, color = Color.Gray)
+                    Text("ID: $idNumber", color = Color.Gray)
                 }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(
+                    bottomStart = 18.dp,
+                    bottomEnd = 18.dp
+                )
+            ) {
+                Text(
+                    "$fineCount unpaid fines found",
+                    modifier = Modifier.padding(16.dp),
+                    color = Color.Gray
+                )
             }
         }
     }

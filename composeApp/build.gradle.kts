@@ -72,6 +72,8 @@ kotlin {
 
 
 
+
+
             }
         }
 
@@ -81,6 +83,8 @@ kotlin {
                 implementation(libs.androidx.activity.compose)
                 implementation("io.ktor:ktor-client-okhttp:3.4.0")
                 implementation("io.coil-kt:coil-compose:2.5.0")
+                implementation("com.google.code.gson:gson:2.10.1")
+
 
             }
         }
@@ -90,6 +94,8 @@ kotlin {
                 implementation(compose.desktop.currentOs)
                 implementation(libs.kotlinx.coroutinesSwing)
                 implementation("io.ktor:ktor-client-okhttp:3.4.0")
+                implementation("com.google.code.gson:gson:2.10.1")
+
 
 
             }

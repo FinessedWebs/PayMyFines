@@ -12,7 +12,7 @@ fun DesktopShell(
     content: @Composable () -> Unit
 ) {
 
-    val navigator = LocalNavigator.current!!
+    /*val navigator = LocalNavigator.current!!
 
     Row(Modifier.fillMaxSize()) {
 
@@ -28,5 +28,5 @@ fun DesktopShell(
         ) {
             content()
         }
-    }
+    }*/
 }

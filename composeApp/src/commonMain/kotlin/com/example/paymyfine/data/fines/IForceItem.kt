@@ -3,6 +3,14 @@ package com.example.paymyfine.data.fines
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class CartItem(
+    val noticeNumber: String,
+    val description: String,
+    val amountInCents: Int
+)
+
+
+@Serializable
 data class IForceItem(
     val requestId: String? = null,
     val dataSource: Int? = null,

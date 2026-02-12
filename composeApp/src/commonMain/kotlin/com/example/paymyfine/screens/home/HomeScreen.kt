@@ -1,10 +1,13 @@
 package com.example.paymyfine.screens.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
@@ -21,11 +24,26 @@ import com.example.paymyfine.data.network.HttpClientFactory
 import com.example.paymyfine.data.session.SessionStore
 import com.example.paymyfine.screens.details.InfringementDetailsScreen
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialogDefaults.shape
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.example.paymyfine.data.cart.CartManager
+import com.example.paymyfine.data.cart.CartProvider
+import com.example.paymyfine.data.payment.PaymentProvider
+import com.example.paymyfine.screens.cart.CartScreen
+import com.example.paymyfine.screens.details.InfringementDetailsContent
 import com.example.paymyfine.screens.profile.ProfileScreen
 import com.example.paymyfine.ui.ProfileBar
+import com.russhwolf.settings.Settings
+import io.ktor.client.HttpClient
+
+
 
 
 
@@ -52,6 +70,10 @@ fun HomeScreen(
     val client = remember { HttpClientFactory.create(sessionStore) }
 
     var selectedFine by remember { mutableStateOf<IForceItem?>(null) }
+    val cartManager =
+        remember { CartProvider.get(sessionStore) }
+
+
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
 
@@ -68,32 +90,19 @@ fun HomeScreen(
                         .fillMaxHeight()
                 ) {
 
-                    // MODE BUTTONS
-                    Row(
-                        modifier = Modifier
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.Start
-                    ) {
+                    Row(Modifier.padding(12.dp)) {
 
                         Button(
                             onClick = { onModeChange(HomeMode.INDIVIDUAL) }
-                        ) {
-                            Text("Individual")
-                        }
+                        ) { Text("Individual") }
 
                         Spacer(Modifier.width(8.dp))
 
                         Button(
                             onClick = { onModeChange(HomeMode.FAMILY) }
-                        ) {
-                            Text("Family")
-                        }
+                        ) { Text("Family") }
                     }
 
-
-
-
-                    // LIST AREA (SCROLLS)
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -102,35 +111,39 @@ fun HomeScreen(
 
                         when (state.mode) {
 
-                            HomeMode.INDIVIDUAL -> {
-                                IndividualHomeContent(
-                                    state = state,
-                                    onFineClick = onFineClick
+                            HomeMode.INDIVIDUAL ->
+                                IndividualFinesList(
+                                    fines = state.fines,
+                                    onFineClick = { selectedFine = it }
                                 )
-                            }
 
-                            HomeMode.FAMILY -> {
+                            HomeMode.FAMILY ->
                                 FamilyHomeContent(
                                     members = members,
                                     familyFines = familyFines,
                                     onExpand = onExpand,
-                                    onFineClick = onFineClick
+                                    onFineClick = { selectedFine = it }
                                 )
-                            }
                         }
                     }
                 }
 
-                // RIGHT SIDE (DETAILS)
+                // RIGHT SIDE
                 Box(
                     modifier = Modifier
                         .weight(0.5f)
                         .fillMaxHeight()
                 ) {
-                    FineDetailsPane(state.selectedFine)
+                    FineDetailsPane(
+                        fine = selectedFine,
+                        client = client,
+                        sessionStore = sessionStore
+                    )
                 }
             }
         }
+
+
 
 
 
@@ -142,56 +155,93 @@ fun HomeScreen(
                     .background(MaterialTheme.colorScheme.primary)
             ) {
 
-
-
-                HomeTopBar(
+                HomeHeader(
                     mode = state.mode,
+                    filtersActive = false,
+                    cartManager = cartManager,
                     onModeChange = onModeChange,
                     onSearchClick = onSearchClick,
-                    onFilterClick = onFilterClick
+                    onFilterClick = onFilterClick,
+                    onCartClick = {
+                        navigator?.push(
+                            CartScreen(sessionStore, PaymentProvider.vm)
+                        )
+
+                    }
                 )
 
 
 
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
                     shape = RoundedCornerShape(
                         topStart = 24.dp,
                         topEnd = 24.dp
                     ),
                     color = Color.White
-                )
-                {
+                ) {
 
-                    ProfileBar(
-                        fullName = sessionStore.getFullName() ?: "You",
-                        email = sessionStore.getEmail() ?: "",
-                        idNumber = sessionStore.getIdNumber() ?: "",
-                        fines = state.fines,
-                        onProfileClick = {
-                            navigator?.push(ProfileScreen())
-                        },
-                        onFineClick = {
-                            navigator?.push(
-                                InfringementDetailsScreen(
-                                    it,
-                                    client,
-                                    sessionStore
-                                )
-                            )
+                    Column(Modifier.fillMaxSize()) {
+
+                        // ✅ PROFILE HEADER
+                        ProfileBar(
+                            fullName = sessionStore.getFullName() ?: "You",
+                            email = sessionStore.getEmail() ?: "",
+                            idNumber = sessionStore.getIdNumber() ?: "",
+                            fineCount = state.fines.size,
+                            onProfileClick = {
+                                navigator?.push(ProfileScreen())
+                            }
+                        )
+
+                        // ✅ FINES AREA FILLS REST OF SCREEN
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                        ) {
+
+                            when (state.mode) {
+
+                                HomeMode.INDIVIDUAL ->
+                                    IndividualFinesList(
+                                        fines = state.fines,
+                                        onFineClick = {
+                                            navigator?.push(
+                                                InfringementDetailsScreen(
+                                                    it,
+                                                    client,
+                                                    sessionStore
+                                                )
+                                            )
+                                        }
+                                    )
+
+                                HomeMode.FAMILY ->
+                                    FamilyHomeContent(
+                                        members = members,
+                                        familyFines = familyFines,
+                                        onExpand = onExpand,
+                                        onFineClick = {
+                                            navigator?.push(
+                                                InfringementDetailsScreen(
+                                                    it,
+                                                    client,
+                                                    sessionStore
+                                                )
+                                            )
+                                        }
+                                    )
+                            }
                         }
-                    )
-
-
-
-
-
+                    }
                 }
-
-
-
             }
         }
+
+
 
         HomeFabMenu(
             mode = state.mode,
@@ -399,7 +449,7 @@ private fun HomeFabMenu(
 
 /* ================= DESKTOP ================= */
 
-@Composable
+/*@Composable
 fun DesktopLayout(
     state: HomeState,
     selectedFine: IForceItem?,
@@ -415,15 +465,24 @@ fun DesktopLayout(
         }
 
         Box(Modifier.weight(1f)) {
-            FineDetailsPane(selectedFine)
+            FineDetailsPane(
+                fine = selectedFine,
+                client = client,
+                sessionStore = sessionStore
+            )
         }
+
     }
-}
+}*/
 
 /* ================= DETAILS ================= */
 
 @Composable
-fun FineDetailsPane(fine: IForceItem?) {
+fun FineDetailsPane(
+    fine: IForceItem?,
+    client: HttpClient,
+    sessionStore: SessionStore
+) {
 
     if (fine == null) {
         Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -432,13 +491,178 @@ fun FineDetailsPane(fine: IForceItem?) {
         return
     }
 
-    Column(Modifier.padding(16.dp)) {
-        Text("Notice: ${fine.noticeNumber}")
-        Text("Location: ${fine.offenceLocation}")
-        Text("Date: ${fine.offenceDate}")
-        Text("Amount: R${(fine.amountDueInCents ?: 0) / 100.0}")
+    InfringementDetailsContent(
+        fine = fine,
+        client = client,
+        sessionStore = sessionStore
+    )
+}
+
+@Composable
+fun HomeHeader(
+    mode: HomeMode,
+    filtersActive: Boolean,
+    cartManager: CartManager,
+    onModeChange: (HomeMode) -> Unit,
+    onSearchClick: () -> Unit,
+    onFilterClick: () -> Unit,
+    onCartClick: () -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFC107)) // ⭐ brand yellow
+            .padding(top = 12.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
+    ) {
+
+        //////////////////////////////////////
+        // TOP ROW — LOGO + ACTIONS
+        //////////////////////////////////////
+
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Column {
+                Text(
+                    "Paymyfines",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = Color.Black
+                )
+
+                Text(
+                    "best way to pay",
+                    fontSize = 11.sp,
+                    color = Color.Black
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                val cart by cartManager.cartFlow.collectAsState()
+
+                BadgedBox(
+                    badge = {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = cart.isNotEmpty(),
+                            enter = fadeIn() + scaleIn(),
+                            exit = fadeOut() + scaleOut()
+                        ) {
+                            Badge {
+                                Text(
+                                    if (cart.size > 99) "99+"
+                                    else cart.size.toString()
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    IconButton(onClick = onCartClick) {
+                        Icon(
+                            Icons.Default.ShoppingCart,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+                }
+
+
+
+
+
+                IconButton(onClick = { }) {
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+
         Spacer(Modifier.height(12.dp))
-        Text("Status: ${fine.status}")
-        Text("Authority: ${fine.issuingAuthority}")
+
+        //////////////////////////////////////
+        // SECOND ROW — MODE + SEARCH/FILTER
+        //////////////////////////////////////
+
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            // LEFT: MODE TOGGLE
+            Row {
+
+                IconButton(
+                    onClick = { onModeChange(HomeMode.INDIVIDUAL) }
+                ) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        tint = if (mode == HomeMode.INDIVIDUAL)
+                            Color.White
+                        else
+                            Color.DarkGray
+                    )
+                }
+
+                IconButton(
+                    onClick = { onModeChange(HomeMode.FAMILY) }
+                ) {
+                    Icon(
+                        Icons.Default.Home,
+                        contentDescription = null,
+                        tint = if (mode == HomeMode.FAMILY)
+                            Color.White
+                        else
+                            Color.DarkGray
+                    )
+                }
+            }
+
+            // RIGHT: FILTER + SEARCH
+            Row {
+
+                Box {
+
+                    IconButton(onClick = onFilterClick) {
+                        Icon(
+                            Icons.Default.FilterList,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+
+                    if (filtersActive) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .background(
+                                    Color.Red,
+                                    shape = CircleShape
+                                )
+                                .align(Alignment.TopEnd)
+                        )
+                    }
+                }
+
+                IconButton(onClick = onSearchClick) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+            }
+        }
     }
 }
+
+
+

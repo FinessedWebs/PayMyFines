@@ -1,15 +1,9 @@
 package com.example.paymyfine.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -24,13 +18,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.Navigator
 import com.example.paymyfine.data.cart.CartManager
+import com.example.paymyfine.data.notification.NotificationsBadgeProvider
 import com.example.paymyfine.data.payment.PaymentProvider
-import com.example.paymyfine.data.payment.PaymentViewModel
 import com.example.paymyfine.data.session.SessionStore
-import com.example.paymyfine.screens.home.HomeScreenRoute
+import com.example.paymyfine.screens.*
 import com.example.paymyfine.screens.about.AboutScreen
 import com.example.paymyfine.screens.cart.CartScreen
-import com.example.paymyfine.screens.notifications.NotificationsScreen
+import com.example.paymyfine.screens.home.HomeScreenRoute
+import com.example.paymyfine.screens.notifications.NotificationsScreenRoute
 import com.example.paymyfine.screens.profile.ProfileScreen
 import org.jetbrains.compose.resources.painterResource
 import paymyfine.composeapp.generated.resources.*
@@ -45,6 +40,18 @@ fun DesktopSideNav(
 
     val cart by cartManager.cartFlow.collectAsState()
 
+    // ⭐ Notifications badge
+    val badgeManager = remember {
+        NotificationsBadgeProvider.create(sessionStore)
+    }
+
+    val unread by badgeManager.count.collectAsState()
+
+    LaunchedEffect(Unit) {
+        badgeManager.refresh()
+    }
+
+    // ⭐ Cart animation
     var lastCount by remember { mutableStateOf(0) }
     var animate by remember { mutableStateOf(false) }
 
@@ -70,8 +77,7 @@ fun DesktopSideNav(
             onClick = { navigator.replace(ProfileScreen()) },
             icon = {
                 Box(
-                    Modifier
-                        .size(40.dp)
+                    Modifier.size(40.dp)
                         .clip(CircleShape)
                         .background(Color.LightGray),
                     contentAlignment = Alignment.Center
@@ -86,11 +92,8 @@ fun DesktopSideNav(
             selected = false,
             onClick = { navigator.replace(HomeScreenRoute()) },
             icon = {
-                Icon(
-                    painterResource(Res.drawable.ic_home),
-                    contentDescription = "Home",
-                    modifier = Modifier.size(28.dp)
-                )
+                Icon(painterResource(Res.drawable.ic_home), "Home",
+                    Modifier.size(28.dp))
             },
             label = { Text("Home") }
         )
@@ -98,38 +101,48 @@ fun DesktopSideNav(
         // ABOUT
         NavigationRailItem(
             selected = false,
-            onClick = { navigator.replace(AboutScreen()) },
+            onClick = { navigator.replace(AboutScreen(sessionStore)) },
             icon = {
-                Icon(
-                    painterResource(Res.drawable.ic_info),
-                    contentDescription = "About",
-                    modifier = Modifier.size(28.dp)
-                )
+                Icon(painterResource(Res.drawable.ic_info),
+                    "About", Modifier.size(28.dp))
             },
             label = { Text("About") }
         )
 
-        // ALERTS
+        // ⭐ ALERTS WITH BADGE
         NavigationRailItem(
             selected = false,
-            onClick = { navigator.replace(NotificationsScreen()) },
+            onClick = { navigator.replace(NotificationsScreenRoute()) },
             icon = {
-                Icon(
-                    painterResource(Res.drawable.ic_notifications),
-                    contentDescription = "Notifications",
-                    modifier = Modifier.size(28.dp)
-                )
+                BadgedBox(
+                    badge = {
+                        if (unread > 0) {
+                            Badge {
+                                Text(
+                                    if (unread > 99) "99+"
+                                    else unread.toString()
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        painterResource(Res.drawable.ic_notifications),
+                        "Alerts",
+                        Modifier.size(28.dp)
+                    )
+                }
             },
             label = { Text("Alerts") }
         )
 
-        // ⭐ CART WITH ANIMATION + BADGE
+        // ⭐ CART
         NavigationRailItem(
             selected = false,
-            onClick = { navigator.push(
-                CartScreen(sessionStore, PaymentProvider.vm)
-
-            )
+            onClick = {
+                navigator.push(
+                    CartScreen(sessionStore, PaymentProvider.vm)
+                )
             },
             icon = {
                 BadgedBox(
@@ -150,8 +163,8 @@ fun DesktopSideNav(
                 ) {
                     Icon(
                         Icons.Default.ShoppingCart,
-                        contentDescription = "Cart",
-                        modifier = Modifier.scale(scale)
+                        "Cart",
+                        Modifier.scale(scale)
                     )
                 }
             },
@@ -159,4 +172,3 @@ fun DesktopSideNav(
         )
     }
 }
-

@@ -1,54 +1,77 @@
 package com.example.paymyfine.data.payment
 
-import com.example.paymyfine.data.cart.CartManager
+import com.example.paymyfine.data.cart.CartProvider
+import com.example.paymyfine.data.session.SessionStore
 import io.ktor.util.date.getTimeMillis
 import kotlinx.datetime.Instant
 
 class PaymentRepository(
     private val service: PaymentService,
-    private val cartManager: CartManager
+    private val sessionStore: SessionStore
 ) {
 
-    suspend fun checkout(): PaymentRegisterResponse {
+    suspend fun checkout(
+        onProgress: (current: Int, total: Int) -> Unit
+    ): List<PaymentRegisterResponse> {
 
+        val cartManager = CartProvider.get(sessionStore)
         val cart = cartManager.getCart()
+
         require(cart.isNotEmpty()) { "Cart empty" }
 
-        val totalCents = cart.sumOf { it.amountInCents }
-        val notices = cart.map { it.noticeNumber }
+        val total = cart.size
 
+        // ✅ SAFE: No Clock.System used
         val nowMillis = getTimeMillis()
 
-        // ✅ Multiplatform ISO string
-        val isoDate =
-            Instant.fromEpochMilliseconds(nowMillis)
-                .toString()
+        // ✅ TRUE ISO-8601 string
+        val iso = Instant
+            .fromEpochMilliseconds(nowMillis)
+            .toString()
 
-        val request = PaymentRegisterRequest(
-            freshFine = false,
-            issuingAuthorityCode = "TMT",
-            noticeNumber = notices.first(),
-            amountInCents = totalCents,
+        val results = mutableListOf<PaymentRegisterResponse>()
 
-            // ✅ FIXED
-            paymentDate = isoDate,
+        cart.forEachIndexed { index, item ->
 
-            paymentProvider = 1,
-            terminalId = 101,
+            onProgress(index + 1, total)
 
-            requestId = nowMillis.toString(),
-            receiptNumber = "APP-$nowMillis",
-            paidNoticeNumbers = notices
-        )
+            val request = PaymentRegisterRequest(
+                freshFine = false,
+                issuingAuthorityCode = "TMT",
+                noticeNumber = item.noticeNumber,
+                amountInCents = item.amountInCents,
+                paymentDate = iso,   // ✅ REAL ISO DATE
+                paymentProvider = 1,
+                terminalId = 101,
+                requestId = "$nowMillis-${item.noticeNumber}",
+                receiptNumber = "APP-$nowMillis-${item.noticeNumber}",
+                paidNoticeNumbers = listOf(item.noticeNumber)
+            )
 
-        println("SENDING PAYMENT DATE → $isoDate")
+            var result = service.registerPayment(request)
 
-        val result = service.registerPayment(request)
+            if (!result.isSuccessful) {
+                result = service.registerPayment(request)
+            }
 
-        if (result.isSuccessful) {
+            if (result.isSuccessful) {
+                PaymentHistoryStore.save(
+                    PaymentHistoryItem(
+                        noticeNumber = item.noticeNumber,
+                        amount = item.amountInCents,
+                        date = iso,
+                        receipt = result.receiptNumber
+                    )
+                )
+            }
+
+            results.add(result)
+        }
+
+        if (results.all { it.isSuccessful }) {
             cartManager.clear()
         }
 
-        return result
+        return results
     }
 }

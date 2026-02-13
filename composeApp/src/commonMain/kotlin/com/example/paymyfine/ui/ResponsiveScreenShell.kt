@@ -12,7 +12,8 @@ import com.russhwolf.settings.Settings
 
 @Composable
 fun ResponsiveScreenShell(
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
+
 ) {
     val navigator = LocalNavigator.current!!
 
@@ -59,7 +60,8 @@ fun ResponsiveScreenShell(
                     content()
                 }
 
-                BottomNavBar(navigator)
+                BottomNavBar(navigator = navigator,
+                    sessionStore = sessionStore)
             }
         }
     }

@@ -55,9 +55,10 @@ fun App() {
         val paymentRepo = remember {
             PaymentRepository(
                 PaymentService(client, baseUrl, sessionStore),
-                cartManager
+                sessionStore
             )
         }
+
 
         val paymentVm = remember { PaymentViewModel(paymentRepo) }
 

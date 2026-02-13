@@ -15,12 +15,30 @@ import org.jetbrains.compose.resources.painterResource
 import paymyfine.composeapp.generated.resources.*
 import com.example.paymyfine.screens.profile.ProfileScreen
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import com.example.paymyfine.data.notification.NotificationsBadgeProvider
+import com.example.paymyfine.data.session.SessionStore
+import com.example.paymyfine.screens.notifications.NotificationsScreenRoute
 
 
 @Composable
 fun BottomNavBar(
-    navigator: Navigator
+    navigator: Navigator,
+    sessionStore: SessionStore
 ) {
+
+    val badgeManager = remember {
+        NotificationsBadgeProvider.create(sessionStore)
+    }
+
+    val unread by badgeManager.count.collectAsState()
+
+    LaunchedEffect(Unit) {
+        badgeManager.refresh()
+    }
 
     NavigationBar(
         containerColor = Color.White // ✅ White background
@@ -41,7 +59,8 @@ fun BottomNavBar(
 
         NavigationBarItem(
             selected = false,
-            onClick = { navigator.replace(AboutScreen()) },
+            onClick = { navigator.replace(AboutScreen(sessionStore))
+            },
             icon = {
                 Icon(
                     painterResource(Res.drawable.ic_info),
@@ -52,9 +71,13 @@ fun BottomNavBar(
             label = { Text("About") }
         )
 
-        NavigationBarItem(
+        /*NavigationBarItem(
             selected = false,
-            onClick = { navigator.replace(NotificationsScreen()) },
+            onClick = {navigator.replace(
+                NotificationsScreenRoute()
+            )
+
+            },
             icon = {
                 Icon(
                     painterResource(Res.drawable.ic_notifications),
@@ -63,14 +86,35 @@ fun BottomNavBar(
                 )
             },
             label = { Text("Alerts") }
-        )
-
-        /*NavigationBarItem(
-            selected = false,
-            onClick = { navigator.replace(ProfileScreen()) },
-            icon = { Icon(Icons.Default.Person, null) },
-            label = { Text("Profile") }
         )*/
+
+        NavigationBarItem(
+            selected = false,
+            onClick = {
+                navigator.replace(NotificationsScreenRoute())
+            },
+            icon = {
+                BadgedBox(
+                    badge = {
+                        if (unread > 0) {
+                            Badge {
+                                Text(
+                                    if (unread > 99) "99+"
+                                    else unread.toString()
+                                )
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        painterResource(Res.drawable.ic_notifications),
+                        contentDescription = "Notifications",
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            },
+            label = { Text("Alerts") }
+        )
 
     }
 }

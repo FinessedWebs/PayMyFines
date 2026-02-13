@@ -1,18 +1,14 @@
 package com.example.paymyfine.screens.payments
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import com.example.paymyfine.data.payment.PaymentViewModel
-
 
 class PaymentScreen(
     private val vm: PaymentViewModel
@@ -33,22 +29,58 @@ class PaymentScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+
             when (val s = state) {
+
+                ////////////////////////////////////
+                // ⭐ PROGRESS UI
+                ////////////////////////////////////
+
+                is PaymentState.Progress -> {
+
+                    Column(
+                        horizontalAlignment =
+                            Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Text(
+                            "Paying ${s.current} of ${s.total} fines..."
+                        )
+                    }
+                }
+
+                ////////////////////////////////////
+                // ⭐ INITIAL LOADING
+                ////////////////////////////////////
 
                 PaymentState.Processing ->
                     CircularProgressIndicator()
+
+                ////////////////////////////////////
+                // ⭐ SUCCESS
+                ////////////////////////////////////
 
                 is PaymentState.Result -> {
                     LaunchedEffect(s) {
                         navigator?.replace(
                             PaymentResultScreen(
-                                success = s.data.isSuccessful,
-                                amountCents = s.data.amountPaidInCents,
-                                reference = s.data.receiptNumber
+                                success =
+                                    s.data.isSuccessful,
+                                amountCents =
+                                    s.data.amountPaidInCents,
+                                reference =
+                                    s.data.receiptNumber
                             )
                         )
                     }
                 }
+
+                ////////////////////////////////////
+                // ⭐ ERROR
+                ////////////////////////////////////
 
                 is PaymentState.Error ->
                     Text(s.message)

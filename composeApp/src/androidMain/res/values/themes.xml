@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base Theme -->
+    <style name="Theme.PayMyFine" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+
+    <!-- Android 12 System Splash -->
+    <style name="Theme.PayMyFine.Splash" parent="Theme.SplashScreen">
+
+        <!-- Background color -->
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+
+        <!-- Centered icon -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_paymyfines_logoyy_crop</item>
+
+        <!-- Remove circle background -->
+        <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+
+        <!-- After splash -->
+        <item name="postSplashScreenTheme">@style/Theme.PayMyFine</item>
+
+    </style>
+
+</resources>

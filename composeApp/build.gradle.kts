@@ -93,6 +93,8 @@ kotlin {
                 implementation("io.ktor:ktor-client-okhttp:3.4.0")
                 implementation("io.coil-kt:coil-compose:2.5.0")
                 implementation("com.google.code.gson:gson:2.10.1")
+                implementation("androidx.core:core-splashscreen:1.0.1")
+                implementation("com.google.android.material:material:1.11.0")
             }
         }
 

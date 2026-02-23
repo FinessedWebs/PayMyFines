@@ -133,6 +133,19 @@ class AuthService(
         }
     }
 
+    suspend fun deactivate(): Result<Unit> {
+        return try {
+
+            client.post("$baseUrl/auth/deactivate")
+
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
     // --------------------------------------------------
     // SAFE ERROR PARSER
     // --------------------------------------------------
@@ -144,4 +157,67 @@ class AuthService(
             rawBody.ifBlank { "Unknown server error" }
         }
     }
+
+    suspend fun updateProfile(
+        fullName: String,
+        email: String
+    ): Result<Pair<String, String>> {
+
+        return try {
+
+            val response = client.put("$baseUrl/auth/profile-update") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    mapOf(
+                        "fullName" to fullName,
+                        "email" to email
+                    )
+                )
+            }
+
+            if (response.status == HttpStatusCode.OK) {
+
+                val body = response.body<Map<String, String>>()
+
+                Result.success(
+                    body["fullName"]!! to body["email"]!!
+                )
+            } else {
+                Result.failure(Exception("Profile update failed"))
+            }
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun changePassword(
+        currentPassword: String,
+        newPassword: String
+    ): Result<Unit> {
+
+        return try {
+
+            val response = client.post("$baseUrl/auth/change-password") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    mapOf(
+                        "currentPassword" to currentPassword,
+                        "newPassword" to newPassword
+                    )
+                )
+            }
+
+            if (response.status == HttpStatusCode.OK) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(response.bodyAsText()))
+            }
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
 }

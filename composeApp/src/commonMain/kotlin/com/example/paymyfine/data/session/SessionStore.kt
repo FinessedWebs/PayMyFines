@@ -2,6 +2,8 @@ package com.example.paymyfine.data.session
 
 import com.example.paymyfine.data.cart.CartProvider
 import com.russhwolf.settings.Settings
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class SessionStore(
     val settings: Settings
@@ -38,35 +40,48 @@ class SessionStore(
     fun getIdNumber(): String? =
         settings.getStringOrNull(KEY_IDNUMBER)
 
-    fun logout() = clear()
-
     fun clear() {
-
-        // ⭐ CLEAR SESSION
         settings.remove(KEY_TOKEN)
         settings.remove(KEY_FULLNAME)
         settings.remove(KEY_EMAIL)
         settings.remove(KEY_IDNUMBER)
         settings.remove(KEY_PROFILE_MODE)
-
-        // ⭐ CLEAR CART PROVIDER
         CartProvider.clear()
     }
 
-    fun requireToken(): String =
-        getToken() ?: error("User not logged in")
-
     fun getFullName(): String? =
-        settings.getStringOrNull("fullName")
+        settings.getStringOrNull(KEY_FULLNAME)
 
     fun getEmail(): String? =
-        settings.getStringOrNull("email")
+        settings.getStringOrNull(KEY_EMAIL)
 
     fun saveFullName(name: String) {
-        settings.putString("fullName", name)
+        settings.putString(KEY_FULLNAME, name)
     }
 
     fun saveEmail(email: String) {
-        settings.putString("email", email)
+        settings.putString(KEY_EMAIL, email)
+    }
+
+    // ✅ PROFILE IMAGE LOCAL STORAGE
+    @OptIn(ExperimentalEncodingApi::class)
+    fun saveProfileImage(userId: String, bytes: ByteArray) {
+        val base64 = Base64.encode(bytes)
+        settings.putString("profile_image_$userId", base64)
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
+    fun getProfileImage(userId: String): ByteArray? {
+        val base64 = settings.getStringOrNull("profile_image_$userId")
+            ?: return null
+        return Base64.decode(base64)
+    }
+
+    fun clearProfileImage(userId: String) {
+        settings.remove("profile_image_$userId")
+    }
+
+    fun requireToken(): String {
+        return getToken() ?: error("User not logged in")
     }
 }

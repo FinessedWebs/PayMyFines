@@ -15,16 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import com.example.paymyfine.theme.OffWhite
 import org.jetbrains.compose.resources.painterResource
-import paymyfine.composeapp.generated.resources.Res
-import paymyfine.composeapp.generated.resources.paymyfines_text_logo_white_back_remove
+import paymyfine.composeapp.generated.resources.*
 
 class SignupScreen(
     private val vm: SignupViewModel
@@ -32,6 +29,7 @@ class SignupScreen(
 
     @Composable
     override fun Content() {
+
         val navigator = LocalNavigator.current
         val scope = rememberCoroutineScope()
         val state = vm.state
@@ -40,127 +38,113 @@ class SignupScreen(
         var repeatPasswordVisible by remember { mutableStateOf(false) }
 
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
-                .background(OffWhite) // like your branded background
+                .background(OffWhite)
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
         ) {
-            Spacer(Modifier.height(50.dp))
+
+            Spacer(Modifier.height(40.dp))
 
             Text(
-                text = "Create Account",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
+                "Create Account",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
             )
 
             Spacer(Modifier.height(24.dp))
 
-            BrandOutlinedTextField(
-                value = state.fullName,
-                onValueChange = vm::onFullNameChange,
-                label = "Full Name",
-                keyboardType = KeyboardType.Text
+            BrandTextField(
+                state.fullName,
+                vm::onFullNameChange,
+                "Full Name",
+                KeyboardType.Text
             )
 
             Spacer(Modifier.height(16.dp))
 
-            BrandOutlinedTextField(
-                value = state.email,
-                onValueChange = vm::onEmailChange,
-                label = "Email",
-                keyboardType = KeyboardType.Email
+            BrandTextField(
+                state.email,
+                vm::onEmailChange,
+                "Email",
+                KeyboardType.Email
             )
 
             Spacer(Modifier.height(16.dp))
 
-            BrandOutlinedTextField(
-                value = state.idNumber,
-                onValueChange = vm::onIdNumberChange,
-                label = "ID Number",
-                keyboardType = KeyboardType.Number
+            BrandTextField(
+                state.idNumber,
+                vm::onIdNumberChange,
+                "ID Number",
+                KeyboardType.Number
             )
 
             Spacer(Modifier.height(16.dp))
 
-            BrandOutlinedPasswordField(
-                value = state.password,
-                onValueChange = vm::onPasswordChange,
-                label = "Password",
-                visible = passwordVisible,
-                onToggleVisible = { passwordVisible = !passwordVisible }
-            )
+            BrandPasswordField(
+                state.password,
+                vm::onPasswordChange,
+                "Password",
+                passwordVisible
+            ) { passwordVisible = !passwordVisible }
 
             Spacer(Modifier.height(16.dp))
 
-            BrandOutlinedPasswordField(
-                value = state.repeatPassword,
-                onValueChange = vm::onRepeatPasswordChange,
-                label = "Repeat Password",
-                visible = repeatPasswordVisible,
-                onToggleVisible = { repeatPasswordVisible = !repeatPasswordVisible }
-            )
+            BrandPasswordField(
+                state.repeatPassword,
+                vm::onRepeatPasswordChange,
+                "Repeat Password",
+                repeatPasswordVisible
+            ) { repeatPasswordVisible = !repeatPasswordVisible }
 
             Spacer(Modifier.height(24.dp))
 
             if (!state.message.isNullOrBlank()) {
                 Text(
-                    text = state.message!!,
-                    color = if (state.messageIsError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
-                    style = MaterialTheme.typography.bodyMedium
+                    state.message!!,
+                    color = if (state.messageIsError)
+                        MaterialTheme.colorScheme.error
+                    else
+                        MaterialTheme.colorScheme.primary
                 )
                 Spacer(Modifier.height(12.dp))
             }
 
             Button(
                 onClick = {
-                    vm.signup(scope) {
-                        navigator?.pop() // go back to Login
-                    }
+                    vm.signup(scope) { navigator?.pop() }
                 },
                 enabled = !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
-                shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White // matches your XML
-                )
+                    .height(52.dp)
             ) {
-                if (state.isLoading) {
+                if (state.isLoading)
                     CircularProgressIndicator(
-                        strokeWidth = 2.dp,
                         modifier = Modifier.size(22.dp),
-                        color = Color.White
+                        strokeWidth = 2.dp
                     )
-                } else {
+                else
                     Text("Sign Up")
-                }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
             TextButton(
                 onClick = { navigator?.pop() },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text(
-                    text = "Already have an account? Login",
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Text("Already have an account? Login")
             }
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(30.dp))
 
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(Modifier.fillMaxWidth(), Alignment.Center) {
                 Image(
-                    painter = painterResource(Res.drawable.paymyfines_text_logo_white_back_remove),
-                    contentDescription = "PMF Logo",
-                    modifier = Modifier.size(100.dp)
+                    painterResource(Res.drawable.paymyfines_text_logo_white_back_remove),
+                    null,
+                    modifier = Modifier.size(220.dp)
                 )
             }
         }
@@ -168,59 +152,49 @@ class SignupScreen(
 }
 
 @Composable
-private fun BrandOutlinedTextField(
+private fun BrandTextField(
     value: String,
-    onValueChange: (String) -> Unit,
+    onChange: (String) -> Unit,
     label: String,
-    keyboardType: KeyboardType
+    type: KeyboardType
 ) {
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
+        value,
+        onChange,
         label = { Text(label) },
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        shape = MaterialTheme.shapes.large,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface
-        )
+        modifier = Modifier.fillMaxWidth(),
+        keyboardOptions = KeyboardOptions(keyboardType = type)
     )
 }
 
 @Composable
-private fun BrandOutlinedPasswordField(
+private fun BrandPasswordField(
     value: String,
-    onValueChange: (String) -> Unit,
+    onChange: (String) -> Unit,
     label: String,
     visible: Boolean,
-    onToggleVisible: () -> Unit
+    toggle: () -> Unit
 ) {
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
+        value,
+        onChange,
         label = { Text(label) },
         singleLine = true,
-        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+        visualTransformation =
+            if (visible) VisualTransformation.None
+            else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         trailingIcon = {
-            IconButton(onClick = onToggleVisible) {
+            IconButton(toggle) {
                 Icon(
-                    imageVector = if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = if (visible) "Hide password" else "Show password"
+                    if (visible)
+                        Icons.Default.VisibilityOff
+                    else Icons.Default.Visibility,
+                    null
                 )
             }
-        },
-        shape = MaterialTheme.shapes.large,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface
-        )
+        }
     )
 }

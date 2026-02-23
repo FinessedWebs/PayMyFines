@@ -1,13 +1,8 @@
 package com.example.paymyfine.screens.login
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import com.example.paymyfine.data.auth.AuthRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 data class LoginUiState(
     val email: String = "",
@@ -19,56 +14,80 @@ data class LoginUiState(
 
 class LoginViewModel(
     private val repo: AuthRepository
-
 ) {
 
-    var state by mutableStateOf(
-        LoginUiState()
-    )
+    var state by mutableStateOf(LoginUiState())
         private set
-
-    fun onEmailChange(v: String) {
-        state = state.copy(email = v, errorMessage = null)
-    }
-
-    fun onPasswordChange(v: String) {
-        state = state.copy(password = v, errorMessage = null)
-    }
 
     private val scope =
         CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
+    fun onEmailChange(v: String) {
+        state = state.copy(
+            email = v,
+            errorMessage = null,
+            showReactivate = false
+        )
+    }
+
+    fun onPasswordChange(v: String) {
+        state = state.copy(
+            password = v,
+            errorMessage = null
+        )
+    }
 
     fun login(onSuccess: () -> Unit) {
 
         state = state.copy(isLoading = true)
 
         scope.launch {
-            val result = repo.login(state.email, state.password)
 
-            state = if (result.isSuccess) {
+            val result =
+                repo.login(state.email, state.password)
+
+            if (result.isSuccess) {
                 state = state.copy(isLoading = false)
                 onSuccess()
-
-                state.copy(isLoading = false)
             } else {
-                state.copy(
+
+                val msg =
+                    result.exceptionOrNull()?.message
+                        ?: "Login failed"
+
+                // ⭐ KEY FIX HERE
+                val isDeactivated =
+                    msg.contains("deactivated", true) ||
+                            msg.contains("inactive", true) ||
+                            msg.contains("disabled", true)
+
+                state = state.copy(
                     isLoading = false,
-                    errorMessage =
-                        result.exceptionOrNull()?.message
-                            ?: "Invalid credentials"
+                    errorMessage = msg,
+                    showReactivate = isDeactivated
                 )
             }
         }
     }
 
-
-    fun reactivate(scope: CoroutineScope) {
+    fun reactivate() {
         scope.launch {
-            repo.reactivate(state.email)
-            state = state.copy(showReactivate = false)
+
+            val result =
+                repo.reactivate(state.email)
+
+            if (result.isSuccess) {
+                state = state.copy(
+                    errorMessage =
+                        "Account reactivated. Please login again.",
+                    showReactivate = false
+                )
+            } else {
+                state = state.copy(
+                    errorMessage =
+                        result.exceptionOrNull()?.message
+                )
+            }
         }
     }
 }
-
-

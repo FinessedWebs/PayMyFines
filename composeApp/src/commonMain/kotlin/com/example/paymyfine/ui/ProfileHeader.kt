@@ -22,16 +22,14 @@ fun ProfileHeader(
     fullName: String,
     email: String,
     idNumber: String,
-    navigator: Navigator
+    onProfileClick: () -> Unit
 ) {
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp)
-            .clickable {
-                navigator.push(ProfileScreen())
-            },
+            .clickable { onProfileClick() },
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFFFE082)
         ),

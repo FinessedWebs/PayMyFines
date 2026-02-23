@@ -17,7 +17,10 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.Navigator
+import com.example.paymyfine.data.auth.AuthService
 import com.example.paymyfine.data.cart.CartManager
+import com.example.paymyfine.data.network.BaseUrlProvider
+import com.example.paymyfine.data.network.HttpClientFactory
 import com.example.paymyfine.data.notification.NotificationsBadgeProvider
 import com.example.paymyfine.data.payment.PaymentProvider
 import com.example.paymyfine.data.session.SessionStore
@@ -74,7 +77,15 @@ fun DesktopSideNav(
         // PROFILE
         NavigationRailItem(
             selected = false,
-            onClick = { navigator.replace(ProfileScreen()) },
+            onClick = { navigator?.push(
+                ProfileScreen(
+                    sessionStore = sessionStore,
+                    authService = AuthService(
+                        HttpClientFactory.create(sessionStore),
+                        BaseUrlProvider.get()
+                    )
+                )
+            ) },
             icon = {
                 Box(
                     Modifier.size(40.dp)

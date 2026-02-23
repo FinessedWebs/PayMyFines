@@ -33,12 +33,15 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.paymyfine.data.auth.AuthService
 import com.example.paymyfine.data.cart.CartManager
 import com.example.paymyfine.data.cart.CartProvider
+import com.example.paymyfine.data.network.BaseUrlProvider
 import com.example.paymyfine.data.payment.PaymentProvider
 import com.example.paymyfine.screens.cart.CartScreen
 import com.example.paymyfine.screens.details.InfringementDetailsContent
 import com.example.paymyfine.screens.profile.ProfileScreen
+import com.example.paymyfine.screens.settings.SettingsScreenRoute
 import com.example.paymyfine.ui.ProfileBar
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
@@ -166,9 +169,15 @@ fun HomeScreen(
                         navigator?.push(
                             CartScreen(sessionStore, PaymentProvider.vm)
                         )
-
+                    },
+                    onSettingsClick = {
+                        navigator?.push(
+                            SettingsScreenRoute(sessionStore)
+                        )
                     }
                 )
+
+
 
 
 
@@ -192,7 +201,15 @@ fun HomeScreen(
                             idNumber = sessionStore.getIdNumber() ?: "",
                             fineCount = state.fines.size,
                             onProfileClick = {
-                                navigator?.push(ProfileScreen())
+                                navigator?.push(
+                                    ProfileScreen(
+                                        sessionStore = sessionStore,
+                                        authService = AuthService(
+                                            HttpClientFactory.create(sessionStore),
+                                            BaseUrlProvider.get()
+                                        )
+                                    )
+                                )
                             }
                         )
 
@@ -506,8 +523,10 @@ fun HomeHeader(
     onModeChange: (HomeMode) -> Unit,
     onSearchClick: () -> Unit,
     onFilterClick: () -> Unit,
-    onCartClick: () -> Unit
+    onCartClick: () -> Unit,
+    onSettingsClick: () -> Unit // ⭐ ADD THIS
 ) {
+
 
     Column(
         modifier = Modifier
@@ -574,13 +593,14 @@ fun HomeHeader(
 
 
 
-                IconButton(onClick = { }) {
+                IconButton(onClick = onSettingsClick) {
                     Icon(
                         Icons.Default.MoreVert,
                         contentDescription = null,
                         tint = Color.White
                     )
                 }
+
             }
         }
 

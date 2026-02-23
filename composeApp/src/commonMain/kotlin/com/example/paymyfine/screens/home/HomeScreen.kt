@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,6 +32,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.input.key.Key.Companion.R
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.paymyfine.data.auth.AuthService
@@ -45,9 +48,9 @@ import com.example.paymyfine.screens.settings.SettingsScreenRoute
 import com.example.paymyfine.ui.ProfileBar
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
-
-
-
+import org.jetbrains.compose.resources.painterResource
+import paymyfine.composeapp.generated.resources.Res
+import paymyfine.composeapp.generated.resources.paymyfines_text_logo_white_back_remove
 
 
 /* ================= HOME SCREEN ================= */
@@ -545,20 +548,12 @@ fun HomeHeader(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            Column {
-                Text(
-                    "Paymyfines",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = Color.Black
-                )
-
-                Text(
-                    "best way to pay",
-                    fontSize = 11.sp,
-                    color = Color.Black
-                )
-            }
+            Image(
+                painter = painterResource(Res.drawable.paymyfines_text_logo_white_back_remove),
+                contentDescription = "PayMyFines Logo",
+                modifier = Modifier.height(30.dp),
+                contentScale = ContentScale.Fit
+            )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
 

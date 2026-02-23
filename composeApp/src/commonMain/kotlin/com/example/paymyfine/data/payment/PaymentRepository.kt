@@ -48,11 +48,7 @@ class PaymentRepository(
                 paidNoticeNumbers = listOf(item.noticeNumber)
             )
 
-            var result = service.registerPayment(request)
-
-            if (!result.isSuccessful) {
-                result = service.registerPayment(request)
-            }
+            val result = service.registerPayment(request)
 
             if (result.isSuccessful) {
                 PaymentHistoryStore.save(

@@ -30,6 +30,10 @@ fun NotificationsScreen(
     val state by vm.state.collectAsState()
     val scope = rememberCoroutineScope()
 
+    LaunchedEffect(vm) {
+        vm.load()
+    }
+
     var selectedItem by remember { mutableStateOf<NotificationDto?>(null) }
 
     Column(

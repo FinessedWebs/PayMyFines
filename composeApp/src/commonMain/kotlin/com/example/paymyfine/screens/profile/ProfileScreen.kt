@@ -18,7 +18,9 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.ui.text.font.FontWeight
 import com.example.paymyfine.data.session.SessionStore
 import com.example.paymyfine.data.network.HttpClientFactory
 import com.example.paymyfine.data.auth.AuthRepository
@@ -58,135 +60,179 @@ class ProfileScreen(
         var showLogoutDialog by remember { mutableStateOf(false) }
         var showPasswordDialog by remember { mutableStateOf(false) }
         var message by remember { mutableStateOf<String?>(null) }
+
         val imagePicker = rememberPlatformImagePicker()
 
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
         ) {
 
-            // ───────────────── PROFILE IMAGE ─────────────────
-            Box(
-                modifier = Modifier.size(140.dp),
-                contentAlignment = Alignment.Center
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
             ) {
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                        .background(Color.LightGray)
-                        .clickable {
-                            // Simulate new image
-                            val fake = ByteArray(50) { it.toByte() }
-                            sessionStore.saveProfileImage(userId, fake)
-                            imageBytes = fake
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        if (imageBytes == null)
-                            "Add Image"
-                        else
-                            "Edit Image"
-                    )
-                }
+                // ---------- HEADER ----------
+                Text(
+                    "Profile",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
 
-                // CAMERA ICON
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .clickable {
-                            imagePicker.pickImage { bytes ->
-                                if (bytes != null) {
-                                    sessionStore.saveProfileImage(userId, bytes)
-                                    imageBytes = bytes
+                Spacer(Modifier.height(24.dp))
+
+                // ---------- PROFILE CARD ----------
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    // ---------------- AVATAR ----------------
+                    Box(
+                        modifier = Modifier.size(140.dp)
+                    ) {
+
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickable {
+                                    imagePicker.pickImage { bytes ->
+                                        if (bytes != null) {
+                                            sessionStore.saveProfileImage(userId, bytes)
+                                            imageBytes = bytes
+                                        }
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (imageBytes == null) {
+                                Text(
+                                    "Add Photo",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                Text(
+                                    "Edit",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickable {
+                                    imagePicker.pickImage { bytes ->
+                                        if (bytes != null) {
+                                            sessionStore.saveProfileImage(userId, bytes)
+                                            imageBytes = bytes
+                                        }
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.CameraAlt,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+
+                    // ---------------- FULL NAME ----------------
+                    OutlinedTextField(
+                        value = fullName,
+                        onValueChange = { fullName = it },
+                        label = { Text("Full Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // ---------------- EMAIL ----------------
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+
+                    Spacer(Modifier.height(24.dp))
+
+                    // ---------------- SAVE ----------------
+                    Button(
+                        onClick = {
+                            scope.launch {
+
+                                val result =
+                                    authService.updateProfile(fullName, email)
+
+                                if (result.isSuccess) {
+
+                                    sessionStore.saveFullName(fullName)
+                                    sessionStore.saveEmail(email)
+
+                                    showLogoutDialog = true
+                                } else {
+                                    message =
+                                        result.exceptionOrNull()?.message
                                 }
                             }
                         },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("📷", color = Color.White)
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Save Changes")
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = { showPasswordDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Change Password")
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Button(
+                        onClick = { showLogoutDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Logout")
+                    }
+
+                    message?.let {
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            it,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
                 }
             }
 
-            Spacer(Modifier.height(32.dp))
-
-            OutlinedTextField(
-                value = fullName,
-                onValueChange = { fullName = it },
-                label = { Text("Full Name") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    scope.launch {
-
-                        val result =
-                            authService.updateProfile(fullName, email)
-
-                        if (result.isSuccess) {
-
-                            sessionStore.saveFullName(fullName)
-                            sessionStore.saveEmail(email)
-
-                            showLogoutDialog = true
-                        } else {
-                            message =
-                                result.exceptionOrNull()?.message
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Save Changes")
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = { showPasswordDialog = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Change Password")
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Button(
-                onClick = { showLogoutDialog = true },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text("Logout")
-            }
-
-            message?.let {
-                Spacer(Modifier.height(12.dp))
-                Text(it, color = MaterialTheme.colorScheme.error)
-            }
-        }
-
+        // -------- Password Dialog --------
         if (showPasswordDialog) {
-
             ChangePasswordDialog(
                 authService = authService,
                 onDismiss = { showPasswordDialog = false },
@@ -197,8 +243,8 @@ class ProfileScreen(
             )
         }
 
+        // -------- Logout Dialog --------
         if (showLogoutDialog) {
-
             AlertDialog(
                 onDismissRequest = { showLogoutDialog = false },
                 title = { Text("Session Expired") },
@@ -217,8 +263,11 @@ class ProfileScreen(
                 }
             )
         }
+
+        }
+
+
     }
-}
 
 @Composable
 fun ChangePasswordDialog(

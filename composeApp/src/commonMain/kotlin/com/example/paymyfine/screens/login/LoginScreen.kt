@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,7 @@ import com.example.paymyfine.screens.signup.SignupScreen
 import com.example.paymyfine.screens.signup.SignupViewModel
 import org.jetbrains.compose.resources.painterResource
 import paymyfine.composeapp.generated.resources.Res
+import paymyfine.composeapp.generated.resources.login_screen
 import paymyfine.composeapp.generated.resources.paymyfines_text_logo_white_back_remove
 
 class LoginScreen(
@@ -36,143 +38,187 @@ class LoginScreen(
         val state = loginVm.state
         var showPass by remember { mutableStateOf(false) }
 
-        val BrandYellow = Color(0xFFFFD401)
+        Box(modifier = Modifier.fillMaxSize()) {
 
-        Column(
-            Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-
-            // ✅ LOGO (UNCHANGED)
+            // BACKGROUND IMAGE
             Image(
-                painter = painterResource(
-                    Res.drawable.paymyfines_text_logo_white_back_remove
-                ),
+                painter = painterResource(Res.drawable.login_screen),
                 contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            Column(
                 modifier = Modifier
-                    .size(280.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
 
-            Spacer(Modifier.height(10.dp))
-
-            Text(
-                "Welcome Back",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text("Login to continue", color = Color.Gray)
-
-            Spacer(Modifier.height(32.dp))
-
-            // EMAIL
-            OutlinedTextField(
-                value = state.email,
-                onValueChange = loginVm::onEmailChange,
-                label = { Text("Email") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email
-                )
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            // PASSWORD (FIXED ICONBUTTON)
-            OutlinedTextField(
-                value = state.password,
-                onValueChange = loginVm::onPasswordChange,
-                label = { Text("Password") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                visualTransformation =
-                    if (showPass)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(
-                        onClick = { showPass = !showPass }
-                    ) {
-                        Icon(
-                            imageVector =
-                                if (showPass)
-                                    Icons.Default.VisibilityOff
-                                else
-                                    Icons.Default.Visibility,
-                            contentDescription = null
-                        )
-                    }
-                }
-            )
-
-            if (!state.errorMessage.isNullOrBlank()) {
-                Spacer(Modifier.height(8.dp))
                 Text(
-                    state.errorMessage!!,
-                    color = MaterialTheme.colorScheme.error
+                    "Welcome\nBack",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
                 )
-            }
 
-            Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(40.dp))
 
-            // LOGIN BUTTON
-            Button(
-                onClick = {
+                DarkInputField(
+                    value = state.email,
+                    onChange = loginVm::onEmailChange,
+                    placeholder = "Email"
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                DarkPasswordField(
+                    value = state.password,
+                    onChange = loginVm::onPasswordChange,
+                    placeholder = "Password",
+                    visible = showPass,
+                    toggle = { showPass = !showPass }
+                )
+
+                if (!state.errorMessage.isNullOrBlank()) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        state.errorMessage!!,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                Spacer(Modifier.height(28.dp))
+
+                PurpleButton(
+                    text = "Log in",
+                    loading = state.isLoading
+                ) {
                     loginVm.login {
                         navigator?.replace(HomeScreenRoute())
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BrandYellow,
-                    contentColor = Color.Black
-                )
-            ) {
-                if (state.isLoading)
-                    CircularProgressIndicator(
-                        color = Color.Black,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(22.dp)
-                    )
-                else
-                    Text("Login", fontWeight = FontWeight.Bold)
-            }
+                }
 
-            Spacer(Modifier.height(12.dp))
+                if (state.showReactivate) {
 
-            TextButton(
-                onClick = {
-                    navigator?.push(SignupScreen(signupVm))
-                },
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Text("Create account")
-            }
+                    Spacer(Modifier.height(12.dp))
 
-            // ✅ REACTIVATE BUTTON (RED)
-            if (state.showReactivate) {
+                    OutlinedButton(
+                        onClick = { loginVm.reactivate() },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color.Red
+                        )
+                    ) {
+                        Text("Reactivate Account")
+                    }
+                }
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(20.dp))
 
-                OutlinedButton(
-                    onClick = { loginVm.reactivate() },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.Red
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                TextButton(
+                    onClick = { navigator?.push(SignupScreen(signupVm)) },
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
-                    Text("Reactivate Account")
+                    Text("Don’t have an account? Sign up", color = Color.White)
                 }
             }
         }
     }
+
+    @Composable
+    private fun DarkInputField(
+        value: String,
+        onChange: (String) -> Unit,
+        placeholder: String
+    ) {
+        TextField(
+            value = value,
+            onValueChange = onChange,
+            placeholder = { Text(placeholder, color = Color.LightGray) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(50),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0x33000000),
+                unfocusedContainerColor = Color(0x33000000),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                cursorColor = Color.White,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            )
+        )
+    }
+
+    @Composable
+    private fun DarkPasswordField(
+        value: String,
+        onChange: (String) -> Unit,
+        placeholder: String,
+        visible: Boolean,
+        toggle: () -> Unit
+    ) {
+        TextField(
+            value = value,
+            onValueChange = onChange,
+            placeholder = { Text(placeholder, color = Color.LightGray) },
+            singleLine = true,
+            visualTransformation =
+                if (visible) VisualTransformation.None
+                else PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = toggle) {
+                    Icon(
+                        if (visible)
+                            Icons.Default.VisibilityOff
+                        else
+                            Icons.Default.Visibility,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(50),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0x33000000),
+                unfocusedContainerColor = Color(0x33000000),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                cursorColor = Color.White,
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            )
+        )
+    }
+
+    @Composable
+    private fun PurpleButton(
+        text: String,
+        loading: Boolean,
+        onClick: () -> Unit
+    ) {
+        Button(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp),
+            shape = RoundedCornerShape(50),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF6C3BFF)
+            )
+        ) {
+            if (loading)
+                CircularProgressIndicator(
+                    color = Color.White,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(22.dp)
+                )
+            else
+                Text(text, color = Color.White, fontWeight = FontWeight.Bold)
+        }
+    }
+
 }
 

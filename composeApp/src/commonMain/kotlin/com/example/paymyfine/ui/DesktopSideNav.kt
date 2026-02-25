@@ -8,6 +8,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -99,28 +103,37 @@ fun DesktopSideNav(
         )
 
         // HOME
+        // HOME
         NavigationRailItem(
             selected = false,
             onClick = { navigator.replace(HomeScreenRoute()) },
             icon = {
-                Icon(painterResource(Res.drawable.ic_home), "Home",
-                    Modifier.size(28.dp))
+                Icon(
+                    imageVector = Icons.Outlined.Home,
+                    contentDescription = "Home",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
             },
             label = { Text("Home") }
         )
 
-        // ABOUT
+// ABOUT
         NavigationRailItem(
             selected = false,
             onClick = { navigator.replace(AboutScreen(sessionStore)) },
             icon = {
-                Icon(painterResource(Res.drawable.ic_info),
-                    "About", Modifier.size(28.dp))
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = "About",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
             },
             label = { Text("About") }
         )
 
-        // ⭐ ALERTS WITH BADGE
+// ⭐ ALERTS WITH BADGE
         NavigationRailItem(
             selected = false,
             onClick = { navigator.replace(NotificationsScreenRoute()) },
@@ -130,17 +143,17 @@ fun DesktopSideNav(
                         if (unread > 0) {
                             Badge {
                                 Text(
-                                    if (unread > 99) "99+"
-                                    else unread.toString()
+                                    if (unread > 99) "99+" else unread.toString()
                                 )
                             }
                         }
                     }
                 ) {
                     Icon(
-                        painterResource(Res.drawable.ic_notifications),
-                        "Alerts",
-                        Modifier.size(28.dp)
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = "Alerts",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             },
@@ -156,13 +169,12 @@ fun DesktopSideNav(
                 )
             },
             icon = {
+
+                val iconTint = Color(0xFF424242) // Dark gray (Material Gray 800)
+
                 BadgedBox(
                     badge = {
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = cart.isNotEmpty(),
-                            enter = fadeIn() + scaleIn(),
-                            exit = fadeOut() + scaleOut()
-                        ) {
+                        if (cart.isNotEmpty()) {
                             Badge {
                                 Text(
                                     if (cart.size > 99) "99+"
@@ -173,13 +185,19 @@ fun DesktopSideNav(
                     }
                 ) {
                     Icon(
-                        Icons.Default.ShoppingCart,
-                        "Cart",
-                        Modifier.scale(scale)
+                        imageVector = Icons.Outlined.ShoppingCart,
+                        contentDescription = "Cart",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             },
-            label = { Text("Cart") }
+            label = {
+                Text(
+                    "Cart",
+                    color = Color(0xFF424242)
+                )
+            }
         )
     }
 }

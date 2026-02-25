@@ -2,32 +2,29 @@ package com.example.paymyfine.ui
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.navigator.Navigator
-import com.example.paymyfine.screens.home.HomeScreenRoute
-import com.example.paymyfine.screens.about.AboutScreen
-import com.example.paymyfine.screens.notifications.NotificationsScreen
-import org.jetbrains.compose.resources.painterResource
-import paymyfine.composeapp.generated.resources.*
-import com.example.paymyfine.screens.profile.ProfileScreen
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import com.example.paymyfine.data.notification.NotificationsBadgeProvider
 import com.example.paymyfine.data.session.SessionStore
+import com.example.paymyfine.screens.about.AboutScreen
+import com.example.paymyfine.screens.home.HomeScreenRoute
 import com.example.paymyfine.screens.notifications.NotificationsScreenRoute
-
 
 @Composable
 fun BottomNavBar(
     navigator: Navigator,
-    sessionStore: SessionStore
+    sessionStore: SessionStore,
+    currentRoute: String // pass current screen key
 ) {
 
     val badgeManager = remember {
@@ -40,59 +37,64 @@ fun BottomNavBar(
         badgeManager.refresh()
     }
 
+    val iconTint = MaterialTheme.colorScheme.onSurfaceVariant
+
     NavigationBar(
-        containerColor = Color.White // ✅ White background
+        containerColor = Color.White
     ) {
 
+        // HOME
         NavigationBarItem(
-            selected = false,
+            selected = currentRoute == "home",
             onClick = { navigator.replace(HomeScreenRoute()) },
             icon = {
                 Icon(
-                    painterResource(Res.drawable.ic_home),
+                    imageVector =
+                        if (currentRoute == "home")
+                            Icons.Filled.Home
+                        else
+                            Icons.Outlined.Home,
                     contentDescription = "Home",
-                    modifier = Modifier.size(28.dp) // ✅ Bigger icon
+                    modifier = Modifier.size(24.dp),
+                    tint = iconTint
                 )
             },
-            label = { Text("Home") }
+            label = {
+                Text(
+                    "Home",
+                    color = iconTint
+                )
+            }
         )
 
+        // ABOUT
         NavigationBarItem(
-            selected = false,
-            onClick = { navigator.replace(AboutScreen(sessionStore))
-            },
+            selected = currentRoute == "about",
+            onClick = { navigator.replace(AboutScreen(sessionStore)) },
             icon = {
                 Icon(
-                    painterResource(Res.drawable.ic_info),
+                    imageVector =
+                        if (currentRoute == "about")
+                            Icons.Filled.Info
+                        else
+                            Icons.Outlined.Info,
                     contentDescription = "About",
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(24.dp),
+                    tint = iconTint
                 )
             },
-            label = { Text("About") }
+            label = {
+                Text(
+                    "About",
+                    color = iconTint
+                )
+            }
         )
 
-        /*NavigationBarItem(
-            selected = false,
-            onClick = {navigator.replace(
-                NotificationsScreenRoute()
-            )
-
-            },
-            icon = {
-                Icon(
-                    painterResource(Res.drawable.ic_notifications),
-                    contentDescription = "Notifications",
-                    modifier = Modifier.size(28.dp)
-                )
-            },
-            label = { Text("Alerts") }
-        )*/
-
+        // NOTIFICATIONS
         NavigationBarItem(
-            selected = false,
-            onClick = {
-                navigator.replace(NotificationsScreenRoute())
-            },
+            selected = currentRoute == "alerts",
+            onClick = { navigator.replace(NotificationsScreenRoute()) },
             icon = {
                 BadgedBox(
                     badge = {
@@ -107,14 +109,23 @@ fun BottomNavBar(
                     }
                 ) {
                     Icon(
-                        painterResource(Res.drawable.ic_notifications),
-                        contentDescription = "Notifications",
-                        modifier = Modifier.size(28.dp)
+                        imageVector =
+                            if (currentRoute == "alerts")
+                                Icons.Filled.Notifications
+                            else
+                                Icons.Outlined.Notifications,
+                        contentDescription = "Alerts",
+                        modifier = Modifier.size(24.dp),
+                        tint = iconTint
                     )
                 }
             },
-            label = { Text("Alerts") }
+            label = {
+                Text(
+                    "Alerts",
+                    color = iconTint
+                )
+            }
         )
-
     }
 }

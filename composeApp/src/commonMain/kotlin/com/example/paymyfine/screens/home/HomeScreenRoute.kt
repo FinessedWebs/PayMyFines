@@ -90,7 +90,8 @@ class HomeScreenRoute : Screen {
                 members = state.familyMembers,
                 familyFines = vm.familyFines,
                 onExpand = vm::loadFinesForMember,
-                onFineClick = vm::selectFine
+                onFineClick = vm::selectFine,
+                onSearchQueryChange = vm::updateSearch
             )
         }
     }

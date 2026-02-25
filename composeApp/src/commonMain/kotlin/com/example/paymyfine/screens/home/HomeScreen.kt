@@ -1,12 +1,15 @@
 package com.example.paymyfine.screens.home
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -27,22 +30,34 @@ import com.example.paymyfine.screens.details.InfringementDetailsScreen
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.key.Key.Companion.R
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.annotation.InternalVoyagerApi
+import cafe.adriel.voyager.navigator.internal.BackHandler
 import com.example.paymyfine.data.auth.AuthService
 import com.example.paymyfine.data.cart.CartManager
 import com.example.paymyfine.data.cart.CartProvider
+import com.example.paymyfine.data.filterByQuery
 import com.example.paymyfine.data.network.BaseUrlProvider
 import com.example.paymyfine.data.payment.PaymentProvider
 import com.example.paymyfine.screens.cart.CartScreen
 import com.example.paymyfine.screens.details.InfringementDetailsContent
+import com.example.paymyfine.screens.login.LoginScreenRoute
 import com.example.paymyfine.screens.profile.ProfileScreen
 import com.example.paymyfine.screens.settings.SettingsScreenRoute
 import com.example.paymyfine.ui.ProfileBar
@@ -50,11 +65,16 @@ import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import org.jetbrains.compose.resources.painterResource
 import paymyfine.composeapp.generated.resources.Res
+import paymyfine.composeapp.generated.resources.ic_paymyfines_logo
 import paymyfine.composeapp.generated.resources.paymyfines_text_logo_white_back_remove
+import kotlinx.datetime.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.TimeSource
 
 
 /* ================= HOME SCREEN ================= */
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     state: HomeState,
@@ -69,15 +89,39 @@ fun HomeScreen(
     members: List<FamilyMemberDto>,
     familyFines: Map<String, List<IForceItem>>,
     onExpand: (String) -> Unit,
-    onFineClick: (IForceItem) -> Unit
+    onFineClick: (IForceItem) -> Unit,
+    onSearchQueryChange: (String) -> Unit,
+
 ) {
 
     val navigator = LocalNavigator.current
     val client = remember { HttpClientFactory.create(sessionStore) }
 
+
     var selectedFine by remember { mutableStateOf<IForceItem?>(null) }
     val cartManager =
         remember { CartProvider.get(sessionStore) }
+
+
+    var fabExpanded by rememberSaveable { mutableStateOf(false) }
+
+// 🔎 FILTER STATE (ADD HERE — inside HomeScreen, before BoxWithConstraints)
+    var activeFilters by remember { mutableStateOf(FilterOptions()) }
+
+    var showFilterSheet by remember { mutableStateOf(false) }
+
+// Derived filtered fines (search + advanced filters combined)
+    val filteredFines by remember(
+        state.fines,
+        state.searchQuery,
+        activeFilters
+    ) {
+        derivedStateOf {
+            state.fines
+                .filterByQuery(state.searchQuery)
+                .applyAdvancedFilters(activeFilters)
+        }
+    }
 
 
 
@@ -92,21 +136,25 @@ fun HomeScreen(
                 // LEFT SIDE
                 Column(
                     modifier = Modifier
-                        .weight(0.5f)
-                        .fillMaxHeight()
+                        .weight(1f)
+                        .fillMaxWidth()
                 ) {
 
-                    Row(Modifier.padding(12.dp)) {
+                    // 🔍 Search Bar (Desktop)
+                    FineSearchBar(
+                        query = state.searchQuery,
+                        onQueryChange = onSearchQueryChange
+                    )
 
-                        Button(
-                            onClick = { onModeChange(HomeMode.INDIVIDUAL) }
-                        ) { Text("Individual") }
 
-                        Spacer(Modifier.width(8.dp))
 
-                        Button(
-                            onClick = { onModeChange(HomeMode.FAMILY) }
-                        ) { Text("Family") }
+                    if (state.searchQuery.isNotBlank()) {
+                        Text(
+                            text = "${filteredFines.size} results",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
                     }
 
                     Box(
@@ -117,19 +165,31 @@ fun HomeScreen(
 
                         when (state.mode) {
 
-                            HomeMode.INDIVIDUAL ->
-                                IndividualFinesList(
-                                    fines = state.fines,
-                                    onFineClick = { selectedFine = it }
-                                )
+                            HomeMode.INDIVIDUAL -> {
 
-                            HomeMode.FAMILY ->
+                                if (filteredFines.isEmpty() && state.searchQuery.isNotBlank()) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("No results found")
+                                    }
+                                } else {
+                                    IndividualFinesList(
+                                        fines = filteredFines,
+                                        onFineClick = { selectedFine = it }
+                                    )
+                                }
+                            }
+
+                            HomeMode.FAMILY -> {
                                 FamilyHomeContent(
                                     members = members,
                                     familyFines = familyFines,
                                     onExpand = onExpand,
                                     onFineClick = { selectedFine = it }
                                 )
+                            }
                         }
                     }
                 }
@@ -155,6 +215,8 @@ fun HomeScreen(
 
         else {
 
+            var showSearch by remember { mutableStateOf(false) }
+
             Column(
                 Modifier
                     .fillMaxSize()
@@ -163,11 +225,11 @@ fun HomeScreen(
 
                 HomeHeader(
                     mode = state.mode,
-                    filtersActive = false,
+                    filtersActive = !activeFilters.isEmpty,
                     cartManager = cartManager,
                     onModeChange = onModeChange,
-                    onSearchClick = onSearchClick,
-                    onFilterClick = onFilterClick,
+                    onSearchClick = { showSearch = !showSearch },
+                    onFilterClick = { showFilterSheet = true },
                     onCartClick = {
                         navigator?.push(
                             CartScreen(sessionStore, PaymentProvider.vm)
@@ -178,9 +240,20 @@ fun HomeScreen(
                             SettingsScreenRoute(sessionStore)
                         )
                     }
+
+
+
                 )
 
 
+                if (showSearch) {
+                    FineSearchBar(
+                        query = state.searchQuery,
+                        onQueryChange = { query ->
+                            onSearchQueryChange(query)
+                        }
+                    )
+                }
 
 
 
@@ -227,7 +300,7 @@ fun HomeScreen(
 
                                 HomeMode.INDIVIDUAL ->
                                     IndividualFinesList(
-                                        fines = state.fines,
+                                        fines = filteredFines,
                                         onFineClick = {
                                             navigator?.push(
                                                 InfringementDetailsScreen(
@@ -261,12 +334,42 @@ fun HomeScreen(
             }
         }
 
+        if (showFilterSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showFilterSheet = false }
+            ) {
+                FilterBottomSheetContent(
+                    currentFilters = activeFilters,
+                    onApply = { newFilters ->
+                        activeFilters = newFilters
+                        showFilterSheet = false
+                    }
+                )
+            }
+        }
+
+        if (fabExpanded) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.2f))
+                    .clickable { fabExpanded = false }
+            )
+        }
+
+
 
 
         HomeFabMenu(
             mode = state.mode,
+            expanded = fabExpanded,
+            onExpandedChange = { fabExpanded = it },
             onAddClick = onAddMemberClick,
             onDeleteClick = onDeleteMemberClick,
+            onLogoutClick = {
+                sessionStore.clear()
+                navigator?.replaceAll(LoginScreenRoute(sessionStore))
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
@@ -279,15 +382,81 @@ fun HomeScreen(
             )
         }
 
+        @OptIn(ExperimentalMaterial3ExpressiveApi::class)
         if (state.isLoading) {
             Box(
-                Modifier.fillMaxSize(),
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.05f)),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                LoadingIndicator(
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
+
+
+
+
+
+}
+
+@Composable
+fun FilterBottomSheetContent(
+    currentFilters: FilterOptions,
+    onApply: (FilterOptions) -> Unit
+) {
+    // temporary minimal implementation so it compiles
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(24.dp)
+    ) {
+
+        Text(
+            text = "Filters",
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                onApply(currentFilters)
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Apply")
+        }
+    }
+}
+
+@Composable
+fun FineSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        placeholder = { Text("Search fines...") },
+        singleLine = true,
+        leadingIcon = {
+            Icon(Icons.Default.Search, null)
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = Color.Gray,
+            cursorColor = MaterialTheme.colorScheme.primary,   // 🔥 FIX
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black
+        )
+    )
 }
 
 /* ================= TOP BAR ================= */
@@ -436,64 +605,107 @@ private fun FamilyHomeContent(
             }
         }
     }
+
+
 }
 
 
 
 /* ================= FAB ================= */
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, InternalVoyagerApi::class)
 @Composable
-private fun HomeFabMenu(
+fun HomeFabMenu(
     mode: HomeMode,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
     onAddClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier, horizontalAlignment = Alignment.End) {
 
-        FloatingActionButton(onClick = onAddClick) {
-            Text("+")
-        }
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val errorColor = MaterialTheme.colorScheme.error
+    val motion = MaterialTheme.motionScheme
 
-        if (mode == HomeMode.FAMILY) {
-            Spacer(Modifier.height(8.dp))
-            FloatingActionButton(
-                onClick = onDeleteClick,
-                containerColor = MaterialTheme.colorScheme.error
+    BackHandler(expanded) { onExpandedChange(false) }
+
+    val scale by animateFloatAsState(
+        targetValue = if (expanded) 1.1f else 1f,
+        animationSpec = motion.fastSpatialSpec()
+    )
+
+    FloatingActionButtonMenu(
+        modifier = modifier,
+        expanded = expanded,
+        button = {
+
+            ToggleFloatingActionButton(
+                checked = expanded,
+                onCheckedChange = { onExpandedChange(!expanded) },
+                modifier = Modifier.scale(scale),
+                containerColor = { primaryColor }
             ) {
-                Text("–")
+
+                if (this.checkedProgress > 0.5f) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close menu",
+                        tint = Color.White
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_paymyfines_logo),
+                        contentDescription = "Open menu",
+                        tint = Color.Unspecified
+                    )
+                }
             }
         }
+    ) {
+
+        FloatingActionButtonMenuItem(
+            onClick = {
+                onExpandedChange(false)
+                onAddClick()
+            },
+            containerColor = primaryColor,
+            icon = {
+                Icon(Icons.Default.PersonAdd, contentDescription = null)
+            },
+            text = { Text("Add Member") }
+        )
+
+        if (mode == HomeMode.FAMILY) {
+            FloatingActionButtonMenuItem(
+                onClick = {
+                    onExpandedChange(false)
+                    onDeleteClick()
+                },
+                containerColor = errorColor,
+                icon = {
+                    Icon(Icons.Default.Delete, contentDescription = null)
+                },
+                text = { Text("Delete Member") }
+            )
+        }
+
+        FloatingActionButtonMenuItem(
+            onClick = {
+                onExpandedChange(false)
+                onLogoutClick()
+            },
+            containerColor = errorColor,
+            icon = {
+                Icon(Icons.Default.Logout, contentDescription = null)
+            },
+            text = { Text("Logout") }
+        )
     }
 }
 
-/* ================= DESKTOP ================= */
 
-/*@Composable
-fun DesktopLayout(
-    state: HomeState,
-    selectedFine: IForceItem?,
-    onFineClick: (IForceItem) -> Unit
-) {
-    Row(Modifier.fillMaxSize()) {
-
-        Box(Modifier.weight(1f)) {
-            IndividualFinesList(
-                fines = state.fines,
-                onFineClick = onFineClick
-            )
-        }
-
-        Box(Modifier.weight(1f)) {
-            FineDetailsPane(
-                fine = selectedFine,
-                client = client,
-                sessionStore = sessionStore
-            )
-        }
-
-    }
-}*/
 
 /* ================= DETAILS ================= */
 
@@ -518,6 +730,22 @@ fun FineDetailsPane(
     )
 }
 
+data class FilterOptions(
+    val statuses: List<String> = emptyList(),
+    val severities: List<String> = emptyList(),
+    val paymentFlags: List<String> = emptyList(),
+    val dateRange: String? = null,
+    val issuingAuthorities: List<String> = emptyList()
+) {
+    val isEmpty: Boolean
+        get() =
+            statuses.isEmpty() &&
+                    severities.isEmpty() &&
+                    paymentFlags.isEmpty() &&
+                    dateRange == null &&
+                    issuingAuthorities.isEmpty()
+}
+
 @Composable
 fun HomeHeader(
     mode: HomeMode,
@@ -527,23 +755,25 @@ fun HomeHeader(
     onSearchClick: () -> Unit,
     onFilterClick: () -> Unit,
     onCartClick: () -> Unit,
-    onSettingsClick: () -> Unit // ⭐ ADD THIS
+    onSettingsClick: () -> Unit
 ) {
 
+    val primary = MaterialTheme.colorScheme.primary
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFFC107)) // ⭐ brand yellow
+            .background(primary)
             .padding(top = 12.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
     ) {
 
-        //////////////////////////////////////
-        // TOP ROW — LOGO + ACTIONS
-        //////////////////////////////////////
+        //////////////////////////////////////////////////////
+        // TOP ROW — LOGO + CART + SETTINGS
+        //////////////////////////////////////////////////////
 
         Row(
-            Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -579,70 +809,43 @@ fun HomeHeader(
                         Icon(
                             Icons.Default.ShoppingCart,
                             contentDescription = null,
-                            tint = Color.White
+                            tint = onPrimary
                         )
                     }
                 }
-
-
-
-
 
                 IconButton(onClick = onSettingsClick) {
                     Icon(
                         Icons.Default.MoreVert,
                         contentDescription = null,
-                        tint = Color.White
+                        tint = onPrimary
                     )
                 }
-
             }
         }
 
         Spacer(Modifier.height(12.dp))
 
-        //////////////////////////////////////
-        // SECOND ROW — MODE + SEARCH/FILTER
-        //////////////////////////////////////
+        //////////////////////////////////////////////////////
+        // SECOND ROW — MODE + FILTER + SEARCH
+        //////////////////////////////////////////////////////
 
         Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // LEFT: MODE TOGGLE
-            Row {
+            // LEFT: MODE SELECTOR
+            ModeButtonGroup(
+                mode = mode,
+                onModeChange = onModeChange,
+                modifier = Modifier.weight(1f) // 🔥 Prevent full-width takeover
+            )
 
-                IconButton(
-                    onClick = { onModeChange(HomeMode.INDIVIDUAL) }
-                ) {
-                    Icon(
-                        Icons.Default.Person,
-                        contentDescription = null,
-                        tint = if (mode == HomeMode.INDIVIDUAL)
-                            Color.White
-                        else
-                            Color.DarkGray
-                    )
-                }
-
-                IconButton(
-                    onClick = { onModeChange(HomeMode.FAMILY) }
-                ) {
-                    Icon(
-                        Icons.Default.Home,
-                        contentDescription = null,
-                        tint = if (mode == HomeMode.FAMILY)
-                            Color.White
-                        else
-                            Color.DarkGray
-                    )
-                }
-            }
+            Spacer(Modifier.width(8.dp))
 
             // RIGHT: FILTER + SEARCH
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
 
                 Box {
 
@@ -650,14 +853,14 @@ fun HomeHeader(
                         Icon(
                             Icons.Default.FilterList,
                             contentDescription = null,
-                            tint = Color.White
+                            tint = onPrimary
                         )
                     }
 
                     if (filtersActive) {
                         Box(
                             modifier = Modifier
-                                .size(10.dp)
+                                .size(8.dp)
                                 .background(
                                     Color.Red,
                                     shape = CircleShape
@@ -671,13 +874,93 @@ fun HomeHeader(
                     Icon(
                         Icons.Default.Search,
                         contentDescription = null,
-                        tint = Color.White
+                        tint = onPrimary
                     )
                 }
             }
         }
     }
+
+
+        }
+
+
+
+private fun List<IForceItem>.applyAdvancedFilters(
+    filters: FilterOptions
+): List<IForceItem> {
+
+    return this.filter { fine ->
+
+        val statusMatch =
+            filters.statuses.isEmpty() ||
+                    filters.statuses.any { fine.status?.contains(it, true) == true }
+
+        val severityMatch =
+            if (filters.severities.isEmpty()) true
+            else {
+                val amount = fine.amountDueInCents ?: 0
+                val severity = when {
+                    amount >= 100_000 -> "High"
+                    amount >= 50_000 -> "Medium"
+                    amount > 0 -> "Low"
+                    else -> "Low"
+                }
+                severity in filters.severities
+            }
+
+        val paymentMatch =
+            filters.paymentFlags.isEmpty() ||
+                    filters.paymentFlags.any {
+                        if (it == "Allowed") fine.paymentAllowed == true
+                        else fine.paymentAllowed != true
+                    }
+
+        val dateMatch =
+            if (filters.dateRange == null) true
+            else isWithinRange(fine.offenceDate, filters.dateRange)
+
+        val authorityMatch =
+            filters.issuingAuthorities.isEmpty() ||
+                    filters.issuingAuthorities.any {
+                        fine.issuingAuthority?.contains(it, true) == true
+                    }
+
+        statusMatch &&
+                severityMatch &&
+                paymentMatch &&
+                dateMatch &&
+                authorityMatch
+    }
 }
+
+private fun isWithinRange(
+    offenceDate: String?,
+    range: String?
+): Boolean {
+
+    if (offenceDate == null || range == null) return true
+
+    return try {
+
+        val offenceMillis = offenceDate.toLong()
+
+        // Monotonic time in millis (multiplatform safe)
+        val nowMillis = TimeSource.Monotonic.markNow().elapsedNow().inWholeMilliseconds
+
+        val diffMillis = nowMillis - offenceMillis
+
+        val rangeDays = range.toLong()
+
+        diffMillis <= rangeDays.days.inWholeMilliseconds
+
+    } catch (e: Exception) {
+        true
+    }
+}
+
+
+
 
 
 

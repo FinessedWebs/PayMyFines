@@ -202,4 +202,11 @@ class HomeViewModel(
     fun clear() {
         scope.cancel()
     }
+
+    fun updateSearch(query: String) {
+        _uiState.value = _uiState.value.copy(
+            searchQuery = query
+        )
+    }
+
 }

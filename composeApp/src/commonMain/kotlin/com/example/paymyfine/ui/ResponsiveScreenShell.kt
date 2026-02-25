@@ -60,8 +60,12 @@ fun ResponsiveScreenShell(
                     content()
                 }
 
+                val currentRoute =
+                    navigator.lastItem::class.simpleName ?: ""
+
                 BottomNavBar(navigator = navigator,
-                    sessionStore = sessionStore)
+                    sessionStore = sessionStore,
+                    currentRoute = currentRoute)
             }
         }
     }

@@ -25,18 +25,43 @@ import org.jetbrains.compose.resources.painterResource
 import paymyfine.composeapp.generated.resources.Res
 import paymyfine.composeapp.generated.resources.login_screen
 import paymyfine.composeapp.generated.resources.paymyfines_text_logo_white_back_remove
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MotionScheme
+import androidx.compose.ui.draw.alpha
 
 class LoginScreen(
     private val loginVm: LoginViewModel,
     private val signupVm: SignupViewModel
 ) : Screen {
 
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
     override fun Content() {
 
         val navigator = LocalNavigator.current
         val state = loginVm.state
         var showPass by remember { mutableStateOf(false) }
+
+        val motion = MotionScheme.expressive()
+
+        var startAnimation by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            startAnimation = true
+        }
+
+        val offsetY by animateDpAsState(
+            targetValue = if (startAnimation) 0.dp else 40.dp,
+            animationSpec = motion.defaultSpatialSpec()
+        )
+
+        val alpha by animateFloatAsState(
+            targetValue = if (startAnimation) 1f else 0f,
+            animationSpec = motion.defaultEffectsSpec()
+        )
 
         Box(modifier = Modifier.fillMaxSize()) {
 
@@ -51,7 +76,9 @@ class LoginScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 32.dp),
+                    .padding(horizontal = 32.dp)
+                    .offset(y = offsetY)
+                    .alpha(alpha),
                 verticalArrangement = Arrangement.Center
             ) {
 
@@ -81,10 +108,18 @@ class LoginScreen(
                 )
 
                 if (!state.errorMessage.isNullOrBlank()) {
+
+                    val errorAlpha by animateFloatAsState(
+                        targetValue = 1f,
+                        animationSpec = motion.fastEffectsSpec()
+                    )
+
                     Spacer(Modifier.height(12.dp))
+
                     Text(
                         state.errorMessage!!,
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.alpha(errorAlpha)
                     )
                 }
 

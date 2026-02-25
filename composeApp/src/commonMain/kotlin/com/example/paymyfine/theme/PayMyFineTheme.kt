@@ -3,11 +3,14 @@ package com.example.paymyfine.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 
 private val LightColors = lightColorScheme(
     primary = PrimaryColor,
-    onPrimary = TextColor, // ✅ black text looks best on bright yellow
+    onPrimary = TextColor,
 
     primaryContainer = PrimaryLightColor,
     onPrimaryContainer = TextColor,
@@ -25,7 +28,6 @@ private val LightColors = lightColorScheme(
     onError = OnPrimaryColor
 )
 
-// Optional: you can define dark colors later if needed
 private val DarkColors = darkColorScheme(
     primary = PrimaryColor,
     onPrimary = TextColor,
@@ -37,13 +39,21 @@ private val DarkColors = darkColorScheme(
     onError = OnPrimaryColor
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PayMyFineTheme(
     darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
+
+    // 🔥 Add MotionScheme
+    val motionScheme = remember {
+        MotionScheme.standard()
+    }
+
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
+        motionScheme = motionScheme, // ✅ Added
         content = content
     )
 }

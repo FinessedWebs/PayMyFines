@@ -32,16 +32,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Money
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.key.Key.Companion.R
 import androidx.compose.ui.layout.ContentScale
@@ -52,6 +58,10 @@ import cafe.adriel.voyager.navigator.internal.BackHandler
 import com.example.paymyfine.data.auth.AuthService
 import com.example.paymyfine.data.cart.CartManager
 import com.example.paymyfine.data.cart.CartProvider
+import com.example.paymyfine.data.filter.AmountRange
+import com.example.paymyfine.data.filter.DateRangeFilter
+import com.example.paymyfine.data.filter.FilterOptions
+import com.example.paymyfine.data.filter.VehicleFilter
 import com.example.paymyfine.data.filterByQuery
 import com.example.paymyfine.data.network.BaseUrlProvider
 import com.example.paymyfine.data.payment.PaymentProvider
@@ -70,6 +80,7 @@ import paymyfine.composeapp.generated.resources.paymyfines_text_logo_white_back_
 import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.TimeSource
+import com.example.paymyfine.data.applyAdvancedFilters
 
 
 /* ================= HOME SCREEN ================= */
@@ -80,7 +91,6 @@ fun HomeScreen(
     state: HomeState,
     onModeChange: (HomeMode) -> Unit,
     onSearchClick: () -> Unit,
-    onFilterClick: () -> Unit,
     onAddMemberClick: () -> Unit,
     onDeleteMemberClick: () -> Unit,
     onDismissDialog: () -> Unit,
@@ -109,14 +119,23 @@ fun HomeScreen(
     var activeFilters by remember { mutableStateOf(FilterOptions()) }
 
     var showFilterSheet by remember { mutableStateOf(false) }
+    // Extract unique values for filter chips
+    val uniqueStatuses = remember(state.fines) {
+        state.fines.mapNotNull { it.status }.distinct().sorted()
+    }
+
+    val uniqueAuthorities = remember(state.fines) {
+        state.fines.mapNotNull { it.issuingAuthority }
+            .map { it.substringAfter("COURT:", it).trim().takeIf { c -> c.isNotEmpty() } ?: it }
+            .distinct()
+            .sorted()
+    }
+
+
 
 // Derived filtered fines (search + advanced filters combined)
-    val filteredFines by remember(
-        state.fines,
-        state.searchQuery,
-        activeFilters
-    ) {
-        derivedStateOf {
+    val filteredFines: List<IForceItem> by remember(state.fines, state.searchQuery, activeFilters) {
+        derivedStateOf<List<IForceItem>> {
             state.fines
                 .filterByQuery(state.searchQuery)
                 .applyAdvancedFilters(activeFilters)
@@ -334,15 +353,25 @@ fun HomeScreen(
             }
         }
 
+        // At the end of HomeScreen, before final closing braces:
+
+// Filter Bottom Sheet
         if (showFilterSheet) {
             ModalBottomSheet(
-                onDismissRequest = { showFilterSheet = false }
+                onDismissRequest = { showFilterSheet = false },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
             ) {
                 FilterBottomSheetContent(
                     currentFilters = activeFilters,
+                    availableFines = state.fines,
+                    uniqueStatuses = uniqueStatuses,
+                    uniqueAuthorities = uniqueAuthorities,
                     onApply = { newFilters ->
                         activeFilters = newFilters
                         showFilterSheet = false
+                    },
+                    onClear = {
+                        activeFilters = FilterOptions()
                     }
                 )
             }
@@ -730,7 +759,7 @@ fun FineDetailsPane(
     )
 }
 
-data class FilterOptions(
+/*data class FilterOptions(
     val statuses: List<String> = emptyList(),
     val severities: List<String> = emptyList(),
     val paymentFlags: List<String> = emptyList(),
@@ -744,12 +773,13 @@ data class FilterOptions(
                     paymentFlags.isEmpty() &&
                     dateRange == null &&
                     issuingAuthorities.isEmpty()
-}
+}*/
 
 @Composable
 fun HomeHeader(
     mode: HomeMode,
-    filtersActive: Boolean,
+    filtersActive: Boolean = false,
+    filterCount: Int = 0,
     cartManager: CartManager,
     onModeChange: (HomeMode) -> Unit,
     onSearchClick: () -> Unit,
@@ -839,33 +869,34 @@ fun HomeHeader(
             ModeButtonGroup(
                 mode = mode,
                 onModeChange = onModeChange,
-                modifier = Modifier.weight(1f) // 🔥 Prevent full-width takeover
+                modifier = Modifier.weight(1f)
             )
 
             Spacer(Modifier.width(8.dp))
 
-            // RIGHT: FILTER + SEARCH
+            // RIGHT: FILTER + SEARCH (SINGLE FILTER BUTTON)
             Row(verticalAlignment = Alignment.CenterVertically) {
 
-                Box {
-
+                // SINGLE FILTER BUTTON WITH BADGE
+                BadgedBox(
+                    badge = {
+                        if (filtersActive) {
+                            Badge(
+                                containerColor = Color.Red,
+                                contentColor = Color.White
+                            ) {
+                                if (filterCount > 0) {
+                                    Text(filterCount.toString())
+                                }
+                            }
+                        }
+                    }
+                ) {
                     IconButton(onClick = onFilterClick) {
                         Icon(
                             Icons.Default.FilterList,
-                            contentDescription = null,
+                            contentDescription = "Filter",
                             tint = onPrimary
-                        )
-                    }
-
-                    if (filtersActive) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .background(
-                                    Color.Red,
-                                    shape = CircleShape
-                                )
-                                .align(Alignment.TopEnd)
                         )
                     }
                 }
@@ -880,13 +911,12 @@ fun HomeHeader(
             }
         }
     }
+}
 
 
-        }
 
 
-
-private fun List<IForceItem>.applyAdvancedFilters(
+/*private fun List<IForceItem>.applyAdvancedFilters(
     filters: FilterOptions
 ): List<IForceItem> {
 
@@ -932,9 +962,11 @@ private fun List<IForceItem>.applyAdvancedFilters(
                 dateMatch &&
                 authorityMatch
     }
-}
 
-private fun isWithinRange(
+
+}*/
+
+/*private fun isWithinRange(
     offenceDate: String?,
     range: String?
 ): Boolean {
@@ -957,8 +989,358 @@ private fun isWithinRange(
     } catch (e: Exception) {
         true
     }
+}*/
+// ================= FILTER BOTTOM SHEET =================
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun FilterBottomSheetContent(
+    currentFilters: FilterOptions,
+    availableFines: List<IForceItem>,
+    uniqueStatuses: List<String>,
+    uniqueAuthorities: List<String>,
+    onApply: (FilterOptions) -> Unit,
+    onClear: () -> Unit = {}
+) {
+    var tempFilters by remember { mutableStateOf(currentFilters) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp)
+            .navigationBarsPadding()
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Filter Fines",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            if (!tempFilters.isEmpty) {
+                TextButton(onClick = {
+                    tempFilters = FilterOptions()
+                }) {
+                    Text("Reset")
+                }
+            }
+        }
+
+        if (tempFilters.activeFilterCount > 0) {
+            Text(
+                text = "${tempFilters.activeFilterCount} active",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+
+        Divider(modifier = Modifier.padding(vertical = 16.dp))
+
+        // Filter options
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Status Filter
+            if (uniqueStatuses.isNotEmpty()) {
+                item {
+                    FilterSection(
+                        title = "Status",
+                        icon = Icons.Default.Warning,
+                        expanded = true
+                    ) {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uniqueStatuses.forEach { status ->
+                                FilterChip(
+                                    selected = status in tempFilters.statuses,
+                                    onClick = {
+                                        tempFilters = tempFilters.copy(
+                                            statuses = if (status in tempFilters.statuses) {
+                                                tempFilters.statuses - status
+                                            } else {
+                                                tempFilters.statuses + status
+                                            }
+                                        )
+                                    },
+                                    label = { Text(status) },
+                                    leadingIcon = if (status in tempFilters.statuses) {
+                                        { Icon(Icons.Default.Check, null, Modifier.size(16.dp)) }
+                                    } else null
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Amount Range Filter
+            item {
+                FilterSection(
+                    title = "Amount Range",
+                    icon = Icons.Default.Money,
+                    expanded = true
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AmountRange.entries.forEach { range ->
+                            val label = when (range) {
+                                AmountRange.LOW -> "Low (< R500)"
+                                AmountRange.MEDIUM -> "Medium (R500 - R1000)"
+                                AmountRange.HIGH -> "High (> R1000)"
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        tempFilters = tempFilters.copy(
+                                            amountRanges = if (range in tempFilters.amountRanges) {
+                                                tempFilters.amountRanges - range
+                                            } else {
+                                                tempFilters.amountRanges + range
+                                            }
+                                        )
+                                    }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = range in tempFilters.amountRanges,
+                                    onCheckedChange = null
+                                )
+                                Text(
+                                    text = label,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Payment Status Filter
+            item {
+                FilterSection(
+                    title = "Payment Status",
+                    icon = Icons.Default.Check,
+                    expanded = true
+                ) {
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        SegmentedButton(
+                            selected = tempFilters.paymentAllowed == null,
+                            onClick = { tempFilters = tempFilters.copy(paymentAllowed = null) },
+                            shape = SegmentedButtonDefaults.itemShape(0, 3)
+                        ) { Text("All") }
+
+                        SegmentedButton(
+                            selected = tempFilters.paymentAllowed == true,
+                            onClick = { tempFilters = tempFilters.copy(paymentAllowed = true) },
+                            shape = SegmentedButtonDefaults.itemShape(1, 3)
+                        ) { Text("Allowed") }
+
+                        SegmentedButton(
+                            selected = tempFilters.paymentAllowed == false,
+                            onClick = { tempFilters = tempFilters.copy(paymentAllowed = false) },
+                            shape = SegmentedButtonDefaults.itemShape(2, 3)
+                        ) { Text("Blocked") }
+                    }
+                }
+            }
+
+            // Date Range Filter
+            item {
+                FilterSection(
+                    title = "Date Range",
+                    icon = Icons.Default.DateRange,
+                    expanded = true
+                ) {
+                    Column {
+                        DateRangeFilter.entries.forEach { range ->
+                            val label = when (range) {
+                                DateRangeFilter.LAST_30_DAYS -> "Last 30 days"
+                                DateRangeFilter.LAST_3_MONTHS -> "Last 3 months"
+                                DateRangeFilter.LAST_6_MONTHS -> "Last 6 months"
+                                DateRangeFilter.LAST_YEAR -> "Last year"
+                                DateRangeFilter.ALL_TIME -> "All time"
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        tempFilters = tempFilters.copy(
+                                            dateRange = if (tempFilters.dateRange == range) null else range
+                                        )
+                                    }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = tempFilters.dateRange == range,
+                                    onClick = null
+                                )
+                                Text(
+                                    text = label,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Vehicle Filter
+            item {
+                FilterSection(
+                    title = "Vehicle",
+                    icon = Icons.Default.Person,
+                    expanded = true
+                ) {
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        SegmentedButton(
+                            selected = tempFilters.vehicleFilter == VehicleFilter.ALL,
+                            onClick = { tempFilters = tempFilters.copy(vehicleFilter = VehicleFilter.ALL) },
+                            shape = SegmentedButtonDefaults.itemShape(0, 3)
+                        ) { Text("All") }
+
+                        SegmentedButton(
+                            selected = tempFilters.vehicleFilter == VehicleFilter.WITH_VEHICLE,
+                            onClick = { tempFilters = tempFilters.copy(vehicleFilter = VehicleFilter.WITH_VEHICLE) },
+                            shape = SegmentedButtonDefaults.itemShape(1, 3)
+                        ) { Text("With Vehicle") }
+
+                        SegmentedButton(
+                            selected = tempFilters.vehicleFilter == VehicleFilter.WITHOUT_VEHICLE,
+                            onClick = { tempFilters = tempFilters.copy(vehicleFilter = VehicleFilter.WITHOUT_VEHICLE) },
+                            shape = SegmentedButtonDefaults.itemShape(2, 3)
+                        ) { Text("No Vehicle") }
+                    }
+                }
+            }
+
+            // Issuing Authority Filter
+            if (uniqueAuthorities.isNotEmpty()) {
+                item {
+                    FilterSection(
+                        title = "Court/Municipality",
+                        icon = Icons.Default.FilterList,
+                        expanded = false
+                    ) {
+                        Column {
+                            uniqueAuthorities.take(5).forEach { authority ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            tempFilters = tempFilters.copy(
+                                                issuingAuthorities = if (authority in tempFilters.issuingAuthorities) {
+                                                    tempFilters.issuingAuthorities - authority
+                                                } else {
+                                                    tempFilters.issuingAuthorities + authority
+                                                }
+                                            )
+                                        }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = authority in tempFilters.issuingAuthorities,
+                                        onCheckedChange = null
+                                    )
+                                    Text(
+                                        text = authority,
+                                        modifier = Modifier.padding(start = 8.dp),
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                            if (uniqueAuthorities.size > 5) {
+                                Text(
+                                    text = "+${uniqueAuthorities.size - 5} more",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(start = 32.dp, top = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Apply Button
+        Button(
+            onClick = { onApply(tempFilters) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = tempFilters != currentFilters || !tempFilters.isEmpty
+        ) {
+            Text("Apply Filters")
+        }
+    }
 }
 
+@Composable
+private fun FilterSection(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    expanded: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(expanded) }
+    val rotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f)
+
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { isExpanded = !isExpanded }
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowUp,
+                contentDescription = null,
+                modifier = Modifier.rotate(rotation)
+            )
+        }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Box(modifier = Modifier.padding(start = 28.dp, top = 8.dp, bottom = 8.dp)) {
+                content()
+            }
+        }
+    }
+}
 
 
 

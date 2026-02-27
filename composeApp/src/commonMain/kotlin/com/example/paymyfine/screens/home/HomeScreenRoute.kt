@@ -81,7 +81,7 @@ class HomeScreenRoute : Screen {
                 state = state,
                 onModeChange = vm::switchMode,
                 onSearchClick = {},
-                onFilterClick = {},
+                // onFilterClick = {},  // REMOVED - now handled internally
                 onAddMemberClick = vm::showAddDialog,
                 onDeleteMemberClick = {},
                 onDismissDialog = vm::hideAddDialog,

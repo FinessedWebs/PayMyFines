@@ -66,13 +66,16 @@ fun App() {
             }
         } else {
 
+            Navigator(LoginScreenRoute(sessionStore)
+           )
+
             // if you dont want login to be skipped remove if condition and use - LoginScreenRoute(sessionStore)
-            Navigator(
-                if (sessionStore.isLoggedIn())
-                    HomeScreenRoute()
-                else
-                    LoginScreenRoute(sessionStore)
-            )
+//            Navigator(
+//                if (sessionStore.isLoggedIn())
+//                    HomeScreenRoute()
+//                else
+//                    LoginScreenRoute(sessionStore)
+//            )
         }
     }
 }

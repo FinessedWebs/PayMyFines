@@ -2,11 +2,13 @@ package com.example.paymyfine.screens.home
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import com.example.paymyfine.data.family.*
 import com.example.paymyfine.data.infringements.*
 import com.example.paymyfine.data.network.*
 import com.example.paymyfine.data.session.SessionStore
+import com.example.paymyfine.screens.home.HomeScreen
 import com.example.paymyfine.ui.ResponsiveScreenShell
 import com.russhwolf.settings.Settings
 
@@ -76,14 +78,15 @@ class HomeScreenRoute : Screen {
 
         // ---------- RESPONSIVE LAYOUT ----------
         ResponsiveScreenShell {
-
             HomeScreen(
                 state = state,
                 onModeChange = vm::switchMode,
                 onSearchClick = {},
-                // onFilterClick = {},  // REMOVED - now handled internally
+                // REMOVED: onFilterClick = {},  <-- DELETE THIS LINE
                 onAddMemberClick = vm::showAddDialog,
-                onDeleteMemberClick = {},
+                onDeleteMemberClick = { member ->
+                    vm.deleteFamily(member.linkId)
+                },
                 onDismissDialog = vm::hideAddDialog,
                 onSubmitFamily = vm::addFamily,
                 sessionStore = sessionStore,

@@ -92,7 +92,7 @@ fun HomeScreen(
     onModeChange: (HomeMode) -> Unit,
     onSearchClick: () -> Unit,
     onAddMemberClick: () -> Unit,
-    onDeleteMemberClick: () -> Unit,
+    onDeleteMemberClick: (FamilyMemberDto) -> Unit,
     onDismissDialog: () -> Unit,
     onSubmitFamily: (AddFamilyMemberRequest) -> Unit,
     sessionStore: SessionStore,
@@ -102,7 +102,7 @@ fun HomeScreen(
     onFineClick: (IForceItem) -> Unit,
     onSearchQueryChange: (String) -> Unit,
 
-) {
+    ) {
 
     val navigator = LocalNavigator.current
     val client = remember { HttpClientFactory.create(sessionStore) }
@@ -114,6 +114,8 @@ fun HomeScreen(
 
 
     var fabExpanded by rememberSaveable { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var memberPendingDelete by remember { mutableStateOf<FamilyMemberDto?>(null) }
 
 // 🔎 FILTER STATE (ADD HERE — inside HomeScreen, before BoxWithConstraints)
     var activeFilters by remember { mutableStateOf(FilterOptions()) }
@@ -149,24 +151,92 @@ fun HomeScreen(
         val isDesktop = maxWidth > 700.dp
 
         if (isDesktop) {
-
             Row(Modifier.fillMaxSize()) {
-
                 // LEFT SIDE
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth()
+                        .fillMaxHeight()
                 ) {
+                    // DESKTOP HEADER WITH SEARCH + MODE TOGGLE + FILTER
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Search Bar (flexible width but not greedy)
+                        FineSearchBar(
+                            query = state.searchQuery,
+                            onQueryChange = onSearchQueryChange,
+                            modifier = Modifier.weight(1f, fill = false) // Don't force fill
+                                .widthIn(max = 400.dp) // Max width constraint
+                        )
 
-                    // 🔍 Search Bar (Desktop)
-                    FineSearchBar(
-                        query = state.searchQuery,
-                        onQueryChange = onSearchQueryChange
-                    )
+                        // MODE TOGGLE BUTTONS
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { onModeChange(HomeMode.INDIVIDUAL) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (state.mode == HomeMode.INDIVIDUAL)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.surface,
+                                    contentColor = if (state.mode == HomeMode.INDIVIDUAL)
+                                        MaterialTheme.colorScheme.onPrimary
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            ) {
+                                Text("Individual")
+                            }
 
+                            Button(
+                                onClick = { onModeChange(HomeMode.FAMILY) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (state.mode == HomeMode.FAMILY)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.surface,
+                                    contentColor = if (state.mode == HomeMode.FAMILY)
+                                        MaterialTheme.colorScheme.onPrimary
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            ) {
+                                Text("Family")
+                            }
+                        }
 
+                        // FILTER BUTTON
+                        Box {
+                            IconButton(
+                                onClick = { showFilterSheet = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FilterList,
+                                    contentDescription = "Filter",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
 
+                            // Red dot indicator
+                            if (!activeFilters.isEmpty) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(Color.Red, CircleShape)
+                                        .align(Alignment.TopEnd)
+                                        .offset(x = (-4).dp, y = 4.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Results count
                     if (state.searchQuery.isNotBlank()) {
                         Text(
                             text = "${filteredFines.size} results",
@@ -176,16 +246,14 @@ fun HomeScreen(
                         )
                     }
 
+                    // Fines List
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
                     ) {
-
                         when (state.mode) {
-
                             HomeMode.INDIVIDUAL -> {
-
                                 if (filteredFines.isEmpty() && state.searchQuery.isNotBlank()) {
                                     Box(
                                         modifier = Modifier.fillMaxSize(),
@@ -200,13 +268,13 @@ fun HomeScreen(
                                     )
                                 }
                             }
-
                             HomeMode.FAMILY -> {
                                 FamilyHomeContent(
                                     members = members,
                                     familyFines = familyFines,
                                     onExpand = onExpand,
-                                    onFineClick = { selectedFine = it }
+                                    onFineClick = { selectedFine = it },
+                                    onDeleteMember = onDeleteMemberClick   // ✅ ADD THIS LINE
                                 )
                             }
                         }
@@ -344,7 +412,8 @@ fun HomeScreen(
                                                     sessionStore
                                                 )
                                             )
-                                        }
+                                        },
+                                        onDeleteMember = onDeleteMemberClick   // ✅ ADD THIS LINE
                                     )
                             }
                         }
@@ -394,7 +463,7 @@ fun HomeScreen(
             expanded = fabExpanded,
             onExpandedChange = { fabExpanded = it },
             onAddClick = onAddMemberClick,
-            onDeleteClick = onDeleteMemberClick,
+            onDeleteClick = { showDeleteDialog = true },
             onLogoutClick = {
                 sessionStore.clear()
                 navigator?.replaceAll(LoginScreenRoute(sessionStore))
@@ -403,6 +472,101 @@ fun HomeScreen(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
         )
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDeleteDialog = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                },
+                title = {
+                    Text("Delete Family Member")
+                },
+                text = {
+                    if (members.isEmpty()) {
+                        Text("No family members found.")
+                    } else {
+                        Column {
+                            members.forEach { member ->
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            showDeleteDialog = false
+                                            memberPendingDelete = member
+                                        }
+                                        .padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+
+                                    Column {
+                                        Text(
+                                            "${member.fullName} ${member.surname}",
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                        Text(
+                                            member.relationship ?: "",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.Gray
+                                        )
+                                    }
+
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+
+                                Divider()
+                            }
+                        }
+                    }
+                }
+            )
+        }
+
+        memberPendingDelete?.let { member ->
+
+            AlertDialog(
+                onDismissRequest = { memberPendingDelete = null },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onDeleteMemberClick(member)
+                            memberPendingDelete = null
+                        }
+                    ) {
+                        Text(
+                            "Delete",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { memberPendingDelete = null }
+                    ) {
+                        Text("Cancel")
+                    }
+                },
+                title = {
+                    Text("Confirm Deletion")
+                },
+                text = {
+                    Text(
+                        "Are you sure you want to delete ${member.fullName} ${member.surname}? This action cannot be undone."
+                    )
+                }
+            )
+        }
 
         if (state.showAddDialog) {
             AddFamilyDialog(
@@ -465,14 +629,14 @@ fun FilterBottomSheetContent(
 @Composable
 fun FineSearchBar(
     query: String,
-    onQueryChange: (String) -> Unit
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = modifier
+            .padding(vertical = 8.dp),
         placeholder = { Text("Search fines...") },
         singleLine = true,
         leadingIcon = {
@@ -481,7 +645,7 @@ fun FineSearchBar(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = Color.Gray,
-            cursorColor = MaterialTheme.colorScheme.primary,   // 🔥 FIX
+            cursorColor = MaterialTheme.colorScheme.primary,
             focusedTextColor = Color.Black,
             unfocusedTextColor = Color.Black
         )
@@ -574,7 +738,8 @@ private fun FamilyHomeContent(
     members: List<FamilyMemberDto>,
     familyFines: Map<String, List<IForceItem>>,
     onExpand: (String) -> Unit,
-    onFineClick: (IForceItem) -> Unit
+    onFineClick: (IForceItem) -> Unit,
+    onDeleteMember: (FamilyMemberDto) -> Unit
 ) {
 
     LazyColumn(
@@ -583,7 +748,10 @@ private fun FamilyHomeContent(
             .padding(16.dp)
     ) {
 
-        items(members) { member ->
+        items(
+            items = members,
+            key = { it.linkId }   // ✅ VERY IMPORTANT
+        ) { member ->
 
             var expanded by rememberSaveable { mutableStateOf(false) }
 
@@ -600,24 +768,50 @@ private fun FamilyHomeContent(
                     .padding(bottom = 12.dp)
             ) {
 
+
+
                 Column(Modifier.padding(16.dp)) {
 
-                    Text(
-                        "${member.fullName} ${member.surname}",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                expanded = !expanded
+                                if (expanded) {
+                                    member.idNumber?.let(onExpand)
+                                }
+                            },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
 
-                    Text(
-                        member.relationship ?: "",
-                        color = Color.Gray
-                    )
+                        Column {
+                            Text(
+                                "${member.fullName} ${member.surname}",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                member.relationship ?: "",
+                                color = Color.Gray
+                            )
+                        }
+
+                        /*IconButton(
+                            onClick = { onDeleteMember(member) }
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Delete Member",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }*/
+                    }
 
                     if (expanded) {
 
                         Spacer(Modifier.height(12.dp))
 
-                        val fines =
-                            familyFines[member.idNumber].orEmpty()
+                        val fines = familyFines[member.idNumber].orEmpty()
 
                         if (fines.isEmpty()) {
                             Text("No fines")
@@ -631,12 +825,13 @@ private fun FamilyHomeContent(
                         }
                     }
                 }
+                }
             }
         }
     }
 
 
-}
+
 
 
 

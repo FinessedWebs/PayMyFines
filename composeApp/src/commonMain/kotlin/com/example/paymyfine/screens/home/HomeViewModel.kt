@@ -130,12 +130,14 @@ class HomeViewModel(
         scope.launch {
 
             when (familyRepo.addMember(req)) {
+
                 is ApiResult.Success -> {
-                    loadFamily()
+                    familyRepo.clearCache()      // 🔥 important
+                    loadFamily(force = true)     // 🔥 force refresh
                     hideAddDialog()
                 }
 
-                else -> {}
+                else -> handleError("Failed to add member")
             }
         }
     }
@@ -144,12 +146,18 @@ class HomeViewModel(
     fun deleteFamily(linkId: String) {
         scope.launch {
 
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
             when (familyRepo.deleteMember(linkId)) {
+
                 is ApiResult.Success -> {
                     familyRepo.clearCache()
                     loadFamily(true)
                 }
-                else -> handleError("Delete failed")
+
+                else -> {
+                    handleError("Delete failed")
+                }
             }
         }
     }

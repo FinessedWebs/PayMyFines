@@ -45,8 +45,15 @@ class FamilyRepository(
             service.addMember(req)
         }
 
-    suspend fun deleteMember(linkId: String) =
-        safeCall<Unit>(sessionStore) {
+    suspend fun deleteMember(linkId: String): ApiResult<Unit> {
+        val result = safeCall<Unit>(sessionStore) {
             service.deleteMember(linkId)
         }
+
+        if (result is ApiResult.Success) {
+            cached = cached.filterNot { it.linkId == linkId }
+        }
+
+        return result
+    }
 }

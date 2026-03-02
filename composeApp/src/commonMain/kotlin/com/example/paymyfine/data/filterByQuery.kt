@@ -1,6 +1,5 @@
 package com.example.paymyfine.data
 
-
 import com.example.paymyfine.data.filter.AmountRange
 import com.example.paymyfine.data.filter.DateRangeFilter
 import com.example.paymyfine.data.filter.FilterOptions
@@ -12,12 +11,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
 
-// YOUR EXISTING FUNCTION - KEEP AS IS
 fun List<IForceItem>.filterByQuery(query: String): List<IForceItem> {
     if (query.isBlank()) return this
-
     val q = query.trim().lowercase()
-
     return filter { fine ->
         fine.noticeNumber?.lowercase()?.contains(q) == true ||
                 fine.vehicleLicenseNumber?.lowercase()?.contains(q) == true ||
@@ -25,44 +21,38 @@ fun List<IForceItem>.filterByQuery(query: String): List<IForceItem> {
                 fine.offenceLocation?.lowercase()?.contains(q) == true ||
                 fine.status?.lowercase()?.contains(q) == true ||
                 fine.summonsNumber?.lowercase()?.contains(q) == true ||
-                fine.amountDueInCents?.let {
-                    (it / 100).toString().contains(q)
-                } == true
+                fine.amountDueInCents?.let { (it / 100).toString().contains(q) } == true
     }
 }
 
-// ADD THIS NEW FUNCTION AT THE END
 fun List<IForceItem>.applyAdvancedFilters(filters: FilterOptions): List<IForceItem> {
     if (filters.isEmpty) return this
 
-    return filter { fine ->
-        // Status filter
+    return this.filter { fine ->
         val statusMatch = filters.statuses.isEmpty() ||
-                fine.status in filters.statuses
+                (fine.status != null && fine.status in filters.statuses)
 
-        // Amount range filter
         val amountMatch = filters.amountRanges.isEmpty() || run {
             val amount = fine.amountDueInCents ?: 0
             val range = when {
-                amount < 50_000 -> AmountRange.LOW      // < R500
-                amount <= 100_000 -> AmountRange.MEDIUM // R500 - R1000
-                else -> AmountRange.HIGH                // > R1000
+                amount < 50_000 -> AmountRange.LOW
+                amount <= 100_000 -> AmountRange.MEDIUM
+                else -> AmountRange.HIGH
             }
             range in filters.amountRanges
         }
 
-        // Payment allowed filter
         val paymentMatch = filters.paymentAllowed == null ||
                 fine.paymentAllowed == filters.paymentAllowed
 
-        // Date range filter
+        // FIXED: Proper date filter with correct API
         val dateMatch = filters.dateRange == null || run {
-            (fine.offenceDate?.let { dateStr ->
+            fine.offenceDate?.let { dateStr ->
                 val fineDate = parseDateString(dateStr) ?: return@run true
-                val today = Clock.System.now()
-                    .toLocalDateTime(TimeZone.currentSystemDefault())
-                    .date
 
+                // FIXED: Use Clock.System.now() with toLocalDateTime()
+                val timeZone = TimeZone.currentSystemDefault()
+                val today = Clock.System.now().toLocalDateTime(timeZone).date
                 val daysSince = fineDate.daysUntil(today)
 
                 when (filters.dateRange) {
@@ -73,10 +63,9 @@ fun List<IForceItem>.applyAdvancedFilters(filters: FilterOptions): List<IForceIt
                     DateRangeFilter.ALL_TIME -> true
                     null -> true
                 }
-            } ?: true) as Boolean
+            } ?: true
         }
 
-        // Vehicle filter
         val vehicleMatch = filters.vehicleFilter == VehicleFilter.ALL || run {
             val hasVehicle = !fine.vehicleLicenseNumber.isNullOrBlank() &&
                     fine.vehicleLicenseNumber != "N/A"
@@ -87,10 +76,10 @@ fun List<IForceItem>.applyAdvancedFilters(filters: FilterOptions): List<IForceIt
             }
         }
 
-        // Issuing authority filter
         val authorityMatch = filters.issuingAuthorities.isEmpty() || run {
             fine.issuingAuthority?.let { auth ->
-                val courtName = extractCourtName(auth)
+                val courtName = auth.substringAfter("COURT:", auth).trim()
+                    .takeIf { it.isNotEmpty() } ?: auth
                 courtName in filters.issuingAuthorities
             } ?: false
         }
@@ -99,7 +88,6 @@ fun List<IForceItem>.applyAdvancedFilters(filters: FilterOptions): List<IForceIt
     }
 }
 
-// Helper functions
 private fun parseDateString(dateStr: String): LocalDate? {
     return try {
         if (dateStr.length == 8) {
@@ -111,11 +99,4 @@ private fun parseDateString(dateStr: String): LocalDate? {
     } catch (e: Exception) {
         null
     }
-}
-
-private fun extractCourtName(issuingAuthority: String): String {
-    return issuingAuthority
-        .substringAfter("COURT:", issuingAuthority)
-        .trim()
-        .takeIf { it.isNotEmpty() } ?: issuingAuthority
 }
